@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: agilepoint-planning-poker-server
+    env: node
+    plan: free
+    buildCommand: npm run install:all && npm --prefix server run build
+    startCommand: npm --prefix server start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000

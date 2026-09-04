@@ -1,0 +1,16 @@
+services:
+  planning-poker:
+    build: .
+    container_name: agilepoint-planning-poker
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - NODE_ENV=production
+    volumes:
+      - poker_data:/app/data
+
+volumes:
+  poker_data:
+    driver: local

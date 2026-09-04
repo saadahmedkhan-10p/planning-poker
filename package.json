@@ -1,0 +1,27 @@
+{
+  "name": "planning-poker-pro",
+  "version": "1.0.0",
+  "description": "Free, self-hostable real-time Agile Planning Poker system for agile teams",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "build": "npm --prefix client run build && npm --prefix server run build",
+    "start": "npm --prefix server start",
+    "install:all": "npm install && npm --prefix server install && npm --prefix client install"
+  },
+  "keywords": [
+    "planning-poker",
+    "scrum",
+    "agile",
+    "story-points",
+    "realtime",
+    "open-source"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^9.2.4"
+  }
+}
