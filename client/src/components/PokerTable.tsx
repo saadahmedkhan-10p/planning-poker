@@ -1,14 +1,13 @@
 import React from 'react';
 import { usePoker } from '../context/PokerContext';
-import { PlayingCard } from './PlayingCard';
+import { VideoTile } from './VideoTile';
 import { 
   Eye, 
-  Crown, 
   Clock, 
   RotateCcw, 
-  UserMinus, 
   Play, 
-  Pause
+  Pause,
+  Sparkles
 } from 'lucide-react';
 
 export const PokerTable: React.FC = () => {
@@ -20,7 +19,14 @@ export const PokerTable: React.FC = () => {
     resetVotes, 
     kickParticipant,
     updateRole,
-    timerAction
+    timerAction,
+    localStream,
+    remoteStreams,
+    isCameraOn,
+    toggleCamera,
+    isMuted,
+    toggleMute,
+    hasMediaSupport
   } = usePoker();
 
   if (!room) return null;
@@ -34,58 +40,63 @@ export const PokerTable: React.FC = () => {
   const consensusValue = room.consensusStats?.mode;
 
   return (
-    <div className="w-full max-w-5xl mx-auto my-6 px-2 flex flex-col items-center">
+    <div className="w-full max-w-6xl mx-auto my-6 px-2 flex flex-col items-center">
       
-      {/* POKER TABLE STADIUM */}
-      <div className="w-full rounded-3xl bg-gradient-to-b from-slate-100/90 to-slate-200/90 dark:from-slate-900/90 dark:to-slate-950/90 border-4 border-slate-200 dark:border-slate-800/80 p-6 sm:p-10 shadow-2xl relative overflow-hidden transition-all">
+      {/* IMMERSIVE DARK POKER STADIUM */}
+      <div className="w-full rounded-[36px] sm:rounded-[56px] bg-gradient-to-br from-slate-900 via-[#0E1326] to-[#0B0E1A] border-4 border-slate-800/80 p-5 sm:p-10 shadow-2xl relative overflow-hidden transition-all">
         
-        {/* Subtle felt surface texture */}
-        <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#4f46e5_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
+        {/* Subtle Felt Surface Glow */}
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#7c3aed_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none" />
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Center Table Hub */}
-        <div className="relative z-10 max-w-md mx-auto rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 p-5 text-center shadow-lg mb-8">
+        <div className="relative z-10 max-w-md mx-auto rounded-2xl glass border border-white/10 p-5 text-center shadow-xl mb-8">
           
-          {/* Progress / Status */}
+          {/* Progress / Status Header */}
           <div className="flex items-center justify-between text-xs font-semibold mb-2">
-            <span className="text-slate-500 dark:text-slate-400 uppercase tracking-wider font-heading">
-              {room.isRevealed ? 'Results Revealed' : 'Round In Progress'}
+            <span className="text-slate-400 uppercase tracking-wider font-heading flex items-center space-x-1.5">
+              <span className={`w-2 h-2 rounded-full ${room.isRevealed ? 'bg-emerald-400' : 'bg-cyan-400 pulse-cyan'}`} />
+              <span>{room.isRevealed ? 'Results Revealed' : 'Round Active'}</span>
             </span>
-            <span className="text-indigo-600 dark:text-indigo-400">
-              {votedCount} of {connectedEstimators.length} Voted
+            <span className="text-violet-400 font-mono">
+              {votedCount} / {connectedEstimators.length} Voted
             </span>
           </div>
 
           {/* Progress Bar */}
-          <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden mb-4">
+          <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden mb-4 border border-white/5">
             <div 
               className={`h-full transition-all duration-300 ${
-                allVoted ? 'bg-emerald-500' : 'bg-indigo-500'
+                allVoted 
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-md shadow-emerald-500/50' 
+                  : 'bg-gradient-to-r from-violet-600 to-indigo-500'
               }`}
               style={{ width: `${connectedEstimators.length ? (votedCount / connectedEstimators.length) * 100 : 0}%` }}
             />
           </div>
 
-          {/* Center Action Buttons */}
+          {/* Center Action Controls */}
           <div className="flex items-center justify-center space-x-2">
             {!room.isRevealed ? (
               isFacilitator ? (
                 <button
                   onClick={revealVotes}
                   disabled={votedCount === 0}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer inline-flex items-center space-x-2 ${
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-lg cursor-pointer inline-flex items-center space-x-2 ${
                     allVoted
-                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white ring-4 ring-emerald-500/20 animate-pulse'
+                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white ring-4 ring-emerald-500/30 animate-pulse'
                       : votedCount > 0
-                      ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                      : 'bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed'
+                      ? 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-violet-600/30'
+                      : 'bg-white/5 text-slate-500 cursor-not-allowed border border-white/5'
                   }`}
                 >
                   <Eye className="w-4 h-4" />
                   <span>Reveal Cards {allVoted ? '(All Voted!)' : ''}</span>
                 </button>
               ) : (
-                <div className="text-xs text-slate-500 dark:text-slate-400 py-1 flex items-center justify-center space-x-1.5">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
+                <div className="text-xs text-slate-400 py-1 flex items-center justify-center space-x-2">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
                   <span>Waiting for facilitator to reveal...</span>
                 </div>
               )
@@ -93,14 +104,15 @@ export const PokerTable: React.FC = () => {
               isFacilitator ? (
                 <button
                   onClick={resetVotes}
-                  className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 transition shadow-md cursor-pointer inline-flex items-center space-x-2"
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 transition shadow-lg border border-white/10 cursor-pointer inline-flex items-center space-x-2"
                 >
-                  <RotateCcw className="w-4 h-4" />
+                  <RotateCcw className="w-4 h-4 text-violet-400" />
                   <span>Start New Round</span>
                 </button>
               ) : (
-                <div className="text-xs text-slate-500 dark:text-slate-400 py-1">
-                  Cards are revealed! Facilitator will start next round.
+                <div className="text-xs text-slate-400 py-1 flex items-center justify-center space-x-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Cards revealed! Facilitator will start next round.</span>
                 </div>
               )
             )}
@@ -108,10 +120,10 @@ export const PokerTable: React.FC = () => {
 
           {/* Timer Section in Center Hub */}
           {room.settings.showTimer && (
-            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
-              <div className="flex items-center space-x-1.5 font-mono font-bold text-slate-700 dark:text-slate-300">
-                <Clock className={`w-3.5 h-3.5 ${room.timerActive ? 'text-amber-500 animate-pulse' : 'text-slate-400'}`} />
-                <span>
+            <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+              <div className="flex items-center space-x-1.5 font-mono font-bold text-slate-300">
+                <Clock className={`w-3.5 h-3.5 ${room.timerActive ? 'text-amber-400 animate-pulse' : 'text-slate-500'}`} />
+                <span className="text-white">
                   {Math.floor((room.timerSecondsRemaining || 0) / 60)}:
                   {String((room.timerSecondsRemaining || 0) % 60).padStart(2, '0')}
                 </span>
@@ -122,7 +134,7 @@ export const PokerTable: React.FC = () => {
                   {room.timerActive ? (
                     <button
                       onClick={() => timerAction('pause')}
-                      className="p-1 rounded text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                      className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
                       title="Pause Timer"
                     >
                       <Pause className="w-3.5 h-3.5" />
@@ -130,7 +142,7 @@ export const PokerTable: React.FC = () => {
                   ) : (
                     <button
                       onClick={() => timerAction('start')}
-                      className="p-1 rounded text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer"
+                      className="p-1 rounded-lg text-emerald-400 hover:bg-emerald-500/20 cursor-pointer"
                       title="Start Timer"
                     >
                       <Play className="w-3.5 h-3.5" />
@@ -138,7 +150,7 @@ export const PokerTable: React.FC = () => {
                   )}
                   <button
                     onClick={() => timerAction('reset', room.settings.timerDuration)}
-                    className="p-1 rounded text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                    className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
                     title="Reset Timer"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
@@ -149,103 +161,45 @@ export const PokerTable: React.FC = () => {
           )}
         </div>
 
-        {/* PARTICIPANTS PODS GRID */}
-        <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6 justify-items-center">
+        {/* PARTICIPANTS VIDEO TILES GRID */}
+        <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-5 justify-items-center">
           {estimators.map(p => {
             const isMe = currentUser?.id === p.id;
-            const isFac = room.facilitatorId === p.id;
             const isUnanimousHighlight = room.isRevealed && p.vote && p.vote === consensusValue;
+            const peerStream = isMe ? localStream : remoteStreams.get(p.id);
 
             return (
-              <div
+              <VideoTile
                 key={p.id}
-                className={`flex flex-col items-center p-3 rounded-2xl transition-all duration-200 w-32 sm:w-36 ${
-                  isMe
-                    ? 'bg-indigo-50/70 dark:bg-indigo-950/40 ring-2 ring-indigo-500/40'
-                    : 'bg-white/70 dark:bg-slate-900/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-800/60'
-                }`}
-              >
-                {/* Playing Card Slot */}
-                <div className="mb-3">
-                  {p.voted ? (
-                    <PlayingCard
-                      value={p.vote}
-                      size="sm"
-                      isRevealed={room.isRevealed}
-                      isVoted={true}
-                      highlightConsensus={Boolean(isUnanimousHighlight)}
-                    />
-                  ) : (
-                    <div className="w-12 h-16 sm:w-14 sm:h-20 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 text-[10px] font-medium">
-                      <span className="w-2 h-2 rounded-full bg-slate-400/80 animate-ping mb-1" />
-                      <span>Thinking</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Participant Details */}
-                <div className="flex items-center space-x-1.5 w-full justify-center">
-                  <div
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 shadow-sm"
-                    style={{ backgroundColor: p.avatarColor }}
-                  >
-                    {p.name.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[75px]">
-                    {p.name} {isMe ? '(You)' : ''}
-                  </span>
-                </div>
-
-                {/* Role / Status Badge */}
-                <div className="flex items-center space-x-1 mt-1">
-                  {isFac && (
-                    <span className="inline-flex items-center text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-1.5 py-0.2 rounded">
-                      <Crown className="w-2.5 h-2.5 mr-0.5" />
-                      Host
-                    </span>
-                  )}
-                  {!p.connected && (
-                    <span className="text-[9px] text-rose-500 font-medium">
-                      Offline
-                    </span>
-                  )}
-                </div>
-
-                {/* Facilitator Context Actions (Kick / Reassign) */}
-                {isFacilitator && !isMe && (
-                  <div className="mt-2 pt-1 border-t border-slate-200/40 dark:border-slate-800/40 flex items-center space-x-2">
-                    <button
-                      onClick={() => updateRole(p.id, 'observer')}
-                      className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
-                      title="Move to Spectator"
-                    >
-                      <Eye className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={() => kickParticipant(p.id)}
-                      className="text-[10px] text-slate-400 hover:text-rose-500 cursor-pointer"
-                      title="Remove from room"
-                    >
-                      <UserMinus className="w-3 h-3" />
-                    </button>
-                  </div>
-                )}
-              </div>
+                participant={p}
+                stream={peerStream}
+                isLocal={isMe}
+                isCameraOn={isMe ? isCameraOn : Boolean(peerStream)}
+                onToggleCamera={toggleCamera}
+                isMuted={isMuted}
+                onToggleMute={toggleMute}
+                hasMediaSupport={hasMediaSupport}
+                isRevealed={room.isRevealed}
+                highlightConsensus={Boolean(isUnanimousHighlight)}
+                isSessionFacilitator={isFacilitator}
+                onKick={() => kickParticipant(p.id)}
+                onMakeObserver={() => updateRole(p.id, 'observer')}
+              />
             );
           })}
         </div>
 
         {/* Observers Row if any */}
         {observers.length > 0 && (
-          <div className="mt-8 pt-4 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-center flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <span className="font-semibold inline-flex items-center mr-1">
-              <Eye className="w-3.5 h-3.5 mr-1" />
+          <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-center flex-wrap gap-2 text-xs text-slate-400">
+            <span className="font-semibold inline-flex items-center mr-1 text-slate-300">
+              <Eye className="w-3.5 h-3.5 mr-1 text-violet-400" />
               Spectators ({observers.length}):
             </span>
             {observers.map(obs => (
               <span 
                 key={obs.id}
-                className="px-2 py-0.5 rounded-full bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 text-[11px]"
+                className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] text-slate-300"
               >
                 {obs.name} {currentUser?.id === obs.id ? '(You)' : ''}
               </span>

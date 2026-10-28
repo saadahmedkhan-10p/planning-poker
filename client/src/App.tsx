@@ -9,6 +9,7 @@ import { StoryDrawer } from './components/StoryDrawer';
 import { RoomSettingsModal } from './components/RoomSettingsModal';
 import { ShareModal } from './components/ShareModal';
 import { JoinModal } from './components/JoinModal';
+import { StoryFetchModal } from './components/StoryFetchModal';
 import { FloatingReactions } from './components/FloatingReactions';
 import { AlertCircle, X } from 'lucide-react';
 
@@ -18,6 +19,7 @@ export const App: React.FC = () => {
   const [isStoryDrawerOpen, setIsStoryDrawerOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isStoryFetchModalOpen, setIsStoryFetchModalOpen] = useState(false);
   const [initialRoomId, setInitialRoomId] = useState<string | null>(null);
 
   // Check URL params for room id
@@ -48,11 +50,11 @@ export const App: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="min-h-screen flex flex-col bg-[#0B0E1A] text-slate-100 selection:bg-violet-500/30 selection:text-white">
       
       {/* ERROR TOAST */}
       {errorMessage && (
-        <div className="fixed top-4 right-4 z-50 flex items-center space-x-2 px-4 py-3 rounded-2xl bg-rose-500 text-white shadow-xl text-xs font-semibold animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="fixed top-4 right-4 z-50 flex items-center space-x-2 px-4 py-3 rounded-2xl bg-rose-600/90 backdrop-blur-md text-white shadow-2xl text-xs font-semibold animate-in fade-in slide-in-from-top-2 duration-200 border border-rose-500/30">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{errorMessage}</span>
           <button onClick={clearError} className="p-1 hover:bg-white/20 rounded cursor-pointer">
@@ -63,7 +65,7 @@ export const App: React.FC = () => {
 
       {/* DISCONNECTED WARNING BANNER */}
       {!isConnected && (
-        <div className="bg-amber-500 text-white text-xs font-bold py-1.5 px-4 text-center tracking-wide flex items-center justify-center space-x-2">
+        <div className="bg-amber-600/90 text-white text-xs font-bold py-1.5 px-4 text-center tracking-wide flex items-center justify-center space-x-2 border-b border-amber-500/30">
           <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
           <span>Connecting to real-time server...</span>
         </div>
@@ -90,6 +92,7 @@ export const App: React.FC = () => {
             <div>
               <ActiveStoryCard 
                 onOpenStoryDrawer={() => setIsStoryDrawerOpen(true)} 
+                onOpenImportModal={() => setIsStoryFetchModalOpen(true)}
               />
 
               {/* Reveal Statistics / Consensus Panel */}
@@ -97,17 +100,17 @@ export const App: React.FC = () => {
                 <ConsensusResults />
               )}
 
-              {/* Center: Poker Table Stadium */}
+              {/* Center: Poker Table Stadium with WebRTC Video Pods */}
               <PokerTable />
             </div>
 
             {/* Bottom: Player's Card Hand */}
-            <div className="sticky bottom-0 pt-2 pb-6 bg-gradient-to-t from-slate-50 via-slate-50/90 to-transparent dark:from-slate-950 dark:via-slate-950/90 dark:to-transparent z-20">
+            <div className="sticky bottom-0 pt-2 pb-6 bg-gradient-to-t from-[#0B0E1A] via-[#0B0E1A]/95 to-transparent z-20">
               <CardDeck />
             </div>
           </main>
 
-          {/* Floating Emoji Reactions */}
+          {/* Floating Emoji Reactions & Dock */}
           <FloatingReactions />
 
           {/* Drawers & Dialogs */}
@@ -125,12 +128,17 @@ export const App: React.FC = () => {
             isOpen={isShareModalOpen}
             onClose={() => setIsShareModalOpen(false)}
           />
+
+          <StoryFetchModal
+            isOpen={isStoryFetchModalOpen}
+            onClose={() => setIsStoryFetchModalOpen(false)}
+          />
         </>
       )}
 
       {/* Footer */}
-      <footer className="py-3 px-4 border-t border-slate-200/60 dark:border-slate-800/60 text-center text-[11px] text-slate-400 dark:text-slate-500">
-        AgilePoint Poker • 100% Free & Open-Source Agile Story Pointing • Zero Subscriptions
+      <footer className="py-3 px-4 border-t border-white/10 text-center text-[11px] text-slate-500">
+        AgilePoint Poker v2 • Dark Glass Real-Time Planning Poker with WebRTC & ADO/Jira Sync
       </footer>
     </div>
   );

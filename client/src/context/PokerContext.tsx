@@ -9,6 +9,7 @@ import type {
 } from '../types/poker';
 import { PRESET_DECKS } from '../types/poker';
 import { soundEffects } from '../sound/soundEffects';
+import { useWebRTC } from '../hooks/useWebRTC';
 
 interface UserProfile {
   id: string;
@@ -28,6 +29,17 @@ interface PokerContextType {
   theme: 'light' | 'dark';
   reactions: ReactionEvent[];
   errorMessage: string | null;
+
+  // WebRTC
+  localStream: MediaStream | null;
+  remoteStreams: Map<string, MediaStream>;
+  isCameraOn: boolean;
+  isMuted: boolean;
+  hasMediaSupport: boolean;
+  startCamera: () => Promise<void>;
+  stopCamera: () => void;
+  toggleCamera: () => Promise<void>;
+  toggleMute: () => void;
   
   // Actions
   joinRoom: (roomId: string, name: string, role?: Participant['role'], avatarColor?: string) => void;
@@ -298,6 +310,14 @@ export const PokerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setErrorMessage(null);
   }, []);
 
+  // WebRTC hook integration
+  const webRTC = useWebRTC({
+    socket,
+    currentUserId: currentUser?.id,
+    roomId: room?.id,
+    participants: room?.participants
+  });
+
   return (
     <PokerContext.Provider
       value={{
@@ -311,6 +331,7 @@ export const PokerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         theme,
         reactions,
         errorMessage,
+        ...webRTC,
         joinRoom,
         leaveRoom,
         castVote,

@@ -43,6 +43,165 @@ app.get('/api/health', (req: Request, res: Response) => {
   });
 });
 
+// Helper functions for ADO and Jira story fetch
+function parseAdoUrl(rawUrl: string): { org: string; project: string; id: string } | null {
+  try {
+    const u = new URL(rawUrl);
+    if (u.hostname === 'dev.azure.com') {
+      const parts = u.pathname.split('/').filter(Boolean);
+      if (parts.length >= 4) {
+        const org = parts[0];
+        const project = parts[1];
+        const id = parts[parts.length - 1];
+        if (/^\d+$/.test(id)) {
+          return { org, project, id };
+        }
+      }
+    } else if (u.hostname.endsWith('.visualstudio.com')) {
+      const org = u.hostname.split('.')[0];
+      const parts = u.pathname.split('/').filter(Boolean);
+      const id = parts[parts.length - 1];
+      const project = parts.find(p => p !== 'DefaultCollection' && p !== '_workitems' && p !== 'edit') || '';
+      if (/^\d+$/.test(id) && project) {
+        return { org, project, id };
+      }
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function parseJiraUrl(rawUrl: string): { domain: string; issueKey: string } | null {
+  try {
+    const u = new URL(rawUrl);
+    const browseMatch = u.pathname.match(/\/browse\/([A-Za-z0-9]+-\d+)/i);
+    if (browseMatch) {
+      return { domain: u.hostname, issueKey: browseMatch[1].toUpperCase() };
+    }
+    const selectedIssue = u.searchParams.get('selectedIssue');
+    if (selectedIssue && /^[A-Za-z0-9]+-\d+$/i.test(selectedIssue)) {
+      return { domain: u.hostname, issueKey: selectedIssue.toUpperCase() };
+    }
+    const lastPart = u.pathname.split('/').filter(Boolean).pop();
+    if (lastPart && /^[A-Za-z0-9]+-\d+$/i.test(lastPart)) {
+      return { domain: u.hostname, issueKey: lastPart.toUpperCase() };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function extractTextFromAdf(node: any): string {
+  if (!node) return '';
+  if (typeof node === 'string') return node;
+  if (node.text) return node.text;
+  if (Array.isArray(node.content)) {
+    return node.content.map(extractTextFromAdf).filter(Boolean).join(' ');
+  }
+  return '';
+}
+
+// REST Proxy Endpoint for Azure DevOps & Jira Stories
+app.get('/api/fetch-story', async (req: Request, res: Response) => {
+  const url = req.query.url as string;
+  const token = (req.headers['x-story-token'] as string) || '';
+
+  if (!url) {
+    res.status(400).json({ error: 'Missing required "url" query parameter' });
+    return;
+  }
+
+  try {
+    const adoInfo = parseAdoUrl(url);
+    if (adoInfo) {
+      const { org, project, id } = adoInfo;
+      const apiUrl = `https://dev.azure.com/${encodeURIComponent(org)}/${encodeURIComponent(project)}/_apis/wit/workitems/${encodeURIComponent(id)}?api-version=7.0`;
+      
+      const headers: Record<string, string> = {
+        'Accept': 'application/json'
+      };
+      if (token) {
+        headers['Authorization'] = `Basic ${Buffer.from(':' + token.trim()).toString('base64')}`;
+      }
+
+      const response = await fetch(apiUrl, { headers });
+      if (!response.ok) {
+        const errText = await response.text();
+        res.status(response.status).json({
+          error: `Azure DevOps API returned status ${response.status}: ${errText.substring(0, 200)}`
+        });
+        return;
+      }
+
+      const data = await response.json() as any;
+      const fields = data.fields || {};
+      const title = fields['System.Title'] || `Work Item #${id}`;
+      let description = fields['System.Description'] || '';
+      // Strip HTML tags for clean text preview
+      description = description.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+      const type = fields['System.WorkItemType'] || 'User Story';
+
+      res.json({
+        id: String(data.id || id),
+        title,
+        description,
+        type,
+        url,
+        source: 'ado'
+      });
+      return;
+    }
+
+    const jiraInfo = parseJiraUrl(url);
+    if (jiraInfo) {
+      const { domain, issueKey } = jiraInfo;
+      const apiUrl = `https://${domain}/rest/api/3/issue/${encodeURIComponent(issueKey)}`;
+      
+      const headers: Record<string, string> = {
+        'Accept': 'application/json'
+      };
+      if (token) {
+        // Jira requires basic auth with email:api_token base64 encoded
+        const authString = token.includes(':') ? token.trim() : `:${token.trim()}`;
+        headers['Authorization'] = `Basic ${Buffer.from(authString).toString('base64')}`;
+      }
+
+      const response = await fetch(apiUrl, { headers });
+      if (!response.ok) {
+        const errText = await response.text();
+        res.status(response.status).json({
+          error: `Jira API returned status ${response.status}: ${errText.substring(0, 200)}`
+        });
+        return;
+      }
+
+      const data = await response.json() as any;
+      const fields = data.fields || {};
+      const title = fields.summary || issueKey;
+      const type = fields.issuetype?.name || 'Story';
+      const description = fields.description ? extractTextFromAdf(fields.description) : '';
+
+      res.json({
+        id: issueKey,
+        title,
+        description,
+        type,
+        url,
+        source: 'jira'
+      });
+      return;
+    }
+
+    res.status(400).json({
+      error: 'Unrecognized URL. Please provide an Azure DevOps work item URL or Jira Cloud issue URL.'
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: `Failed to fetch story: ${err.message || 'Unknown server error'}` });
+  }
+});
+
 app.post('/api/rooms', (req: Request, res: Response) => {
   const { name, settings, customId } = req.body;
   const room = roomManager.createRoom(name, settings, customId);
@@ -314,8 +473,48 @@ io.on('connection', (socket: Socket) => {
     broadcastRoomState(roomId);
   });
 
+  // WebRTC Signaling Relay
+  socket.on('webrtc_offer', ({ targetUserId, offer }) => {
+    const myMeta = socketMeta.get(socket.id);
+    if (!myMeta?.userId || !myMeta?.roomId) return;
+
+    for (const [sid, meta] of socketMeta) {
+      if (meta.userId === targetUserId && meta.roomId === myMeta.roomId) {
+        io.to(sid).emit('webrtc_offer', { fromUserId: myMeta.userId, offer });
+        break;
+      }
+    }
+  });
+
+  socket.on('webrtc_answer', ({ targetUserId, answer }) => {
+    const myMeta = socketMeta.get(socket.id);
+    if (!myMeta?.userId || !myMeta?.roomId) return;
+
+    for (const [sid, meta] of socketMeta) {
+      if (meta.userId === targetUserId && meta.roomId === myMeta.roomId) {
+        io.to(sid).emit('webrtc_answer', { fromUserId: myMeta.userId, answer });
+        break;
+      }
+    }
+  });
+
+  const handleIceRelay = ({ targetUserId, candidate }: { targetUserId: string; candidate: any }) => {
+    const myMeta = socketMeta.get(socket.id);
+    if (!myMeta?.userId || !myMeta?.roomId) return;
+
+    for (const [sid, meta] of socketMeta) {
+      if (meta.userId === targetUserId && meta.roomId === myMeta.roomId) {
+        io.to(sid).emit('webrtc_ice', { fromUserId: myMeta.userId, candidate });
+        io.to(sid).emit('webrtc_ice_candidate', { fromUserId: myMeta.userId, candidate });
+        break;
+      }
+    }
+  };
+  socket.on('webrtc_ice', handleIceRelay);
+  socket.on('webrtc_ice_candidate', handleIceRelay);
+
   // Team Floating Reactions
-  socket.on('send_reaction', ({ roomId, emoji }) => {
+  socket.on('send_reaction', ({ roomId, emoji, x, y }) => {
     const meta = socketMeta.get(socket.id);
     if (!meta || !meta.userId) return;
 
@@ -327,7 +526,9 @@ io.on('connection', (socket: Socket) => {
       senderId: meta.userId,
       senderName: sender?.name || 'Anonymous',
       emoji,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      x,
+      y
     };
 
     io.to(roomId).emit('reaction_received', reaction);

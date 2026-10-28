@@ -42,16 +42,16 @@ export const CardDeck: React.FC = () => {
 
   if (isObserver) {
     return (
-      <div className="w-full max-w-4xl mx-auto p-4 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200 dark:border-slate-800 text-center flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
-        <div className="flex items-center space-x-3 text-slate-600 dark:text-slate-300 text-sm">
-          <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
+      <div className="w-full max-w-4xl mx-auto p-4 rounded-2xl glass-card text-center flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg border border-white/10">
+        <div className="flex items-center space-x-3 text-slate-300 text-sm">
+          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-slate-400">
             <Eye className="w-4 h-4" />
           </div>
-          <span>You are viewing as an <strong>Observer / Spectator</strong>. You are not casting story points.</span>
+          <span>You are viewing as an <strong>Observer</strong>. Join as estimator to vote on points.</span>
         </div>
         <button
           onClick={() => updateRole(currentUser.id, 'estimator')}
-          className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-sm cursor-pointer whitespace-nowrap"
+          className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-500 transition shadow-md shadow-violet-600/30 cursor-pointer whitespace-nowrap"
         >
           Join as Estimator
         </button>
@@ -62,20 +62,20 @@ export const CardDeck: React.FC = () => {
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col items-center">
       {/* Hand Header */}
-      <div className="flex items-center justify-between w-full px-2 mb-2">
+      <div className="flex items-center justify-between w-full px-3 mb-2">
         <div className="flex items-center space-x-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-heading">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 font-heading">
             Your Estimation Hand
           </span>
-          <span className="hidden sm:inline text-[11px] text-slate-400 dark:text-slate-500">
-            (Keys 1-9 to vote quickly)
+          <span className="hidden sm:inline text-[11px] text-slate-500">
+            (Press 1-9 to pick instantly)
           </span>
         </div>
 
         {currentVote && (
           <button
             onClick={() => castVote(null)}
-            className="inline-flex items-center space-x-1 text-xs text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 transition cursor-pointer font-medium"
+            className="inline-flex items-center space-x-1 text-xs text-rose-400 hover:text-rose-300 transition cursor-pointer font-medium bg-rose-500/10 hover:bg-rose-500/20 px-2.5 py-1 rounded-lg border border-rose-500/20"
           >
             <X className="w-3.5 h-3.5" />
             <span>Clear vote ({currentVote})</span>
@@ -84,7 +84,7 @@ export const CardDeck: React.FC = () => {
       </div>
 
       {/* Hand Cards */}
-      <div className="w-full overflow-x-auto pb-4 pt-2 px-2 flex items-center justify-start md:justify-center gap-2 sm:gap-3 scrollbar-none">
+      <div className="w-full overflow-x-auto pb-4 pt-2 px-3 flex items-center justify-start md:justify-center gap-2.5 sm:gap-3.5 scrollbar-none">
         {activeDeck.map((val, idx) => {
           const isSelected = currentVote === val;
           const shortcut = idx < 9 ? idx + 1 : undefined;

@@ -68,6 +68,8 @@ export interface ReactionEvent {
   senderName: string;
   emoji: string;
   timestamp: number;
+  x?: number;
+  y?: number;
 }
 
 export interface ClientRoomState {

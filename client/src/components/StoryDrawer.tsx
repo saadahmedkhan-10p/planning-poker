@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePoker } from '../context/PokerContext';
+import { fetchStoryFromUrl, type FetchedStory } from '../services/storyFetcher';
 import { 
   X, 
   Download, 
@@ -8,8 +9,17 @@ import {
   Trash2, 
   FileText,
   UploadCloud,
-  CheckCircle2
+  CheckCircle2,
+  DownloadCloud,
+  Key,
+  Link as LinkIcon,
+  Eye,
+  EyeOff,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
+
+const STORY_TOKEN_STORAGE_KEY = 'agilepoint_story_token';
 
 interface StoryDrawerProps {
   isOpen: boolean;
@@ -26,12 +36,26 @@ export const StoryDrawer: React.FC<StoryDrawerProps> = ({ isOpen, onClose }) => 
     deleteStory 
   } = usePoker();
 
-  const [activeTab, setActiveTab] = useState<'list' | 'add' | 'import'>('list');
+  const [activeTab, setActiveTab] = useState<'list' | 'import-url' | 'add' | 'import-bulk'>('list');
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [newUrl, setNewUrl] = useState('');
   const [bulkInput, setBulkInput] = useState('');
   const [copiedSummary, setCopiedSummary] = useState(false);
+
+  // ADO/Jira URL Import states
+  const [importUrl, setImportUrl] = useState('');
+  const [token, setToken] = useState(() => localStorage.getItem(STORY_TOKEN_STORAGE_KEY) || '');
+  const [showToken, setShowToken] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [fetchedStory, setFetchedStory] = useState<FetchedStory | null>(null);
+
+  useEffect(() => {
+    if (token) {
+      localStorage.setItem(STORY_TOKEN_STORAGE_KEY, token);
+    }
+  }, [token]);
 
   if (!isOpen || !room) return null;
 
@@ -55,22 +79,61 @@ export const StoryDrawer: React.FC<StoryDrawerProps> = ({ isOpen, onClose }) => 
     e.preventDefault();
     if (!bulkInput.trim()) return;
 
-    // Split lines by newline. If comma or tab separated, parse title + description
     const lines = bulkInput.split('\n').map(l => l.trim()).filter(Boolean);
-    const parsedStories = lines.map(line => {
-      // Check if Jira format like "PROJ-123: Story title"
-      return {
-        title: line,
-        description: undefined,
-        url: undefined
-      };
-    });
+    const parsedStories = lines.map(line => ({
+      title: line,
+      description: undefined,
+      url: undefined
+    }));
 
     if (parsedStories.length > 0) {
       importStories(parsedStories);
       setBulkInput('');
       setActiveTab('list');
     }
+  };
+
+  const handleFetchStory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!importUrl.trim()) return;
+
+    setImportLoading(true);
+    setImportError(null);
+    setFetchedStory(null);
+
+    try {
+      const story = await fetchStoryFromUrl(importUrl.trim(), token.trim());
+      setFetchedStory(story);
+    } catch (err: any) {
+      setImportError(err.message || 'Failed to fetch work item');
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const handleAddFetchedStory = (setAsActive = false) => {
+    if (!fetchedStory) return;
+
+    addStory({
+      title: `${fetchedStory.id ? `[${fetchedStory.id}] ` : ''}${fetchedStory.title}`,
+      description: fetchedStory.description,
+      url: fetchedStory.url
+    });
+
+    if (setAsActive) {
+      setTimeout(() => {
+        if (room?.stories) {
+          const matching = room.stories.find(s => s.url === fetchedStory.url || s.title.includes(fetchedStory.id));
+          if (matching) {
+            setActiveStory(matching.id);
+          }
+        }
+      }, 300);
+    }
+
+    setFetchedStory(null);
+    setImportUrl('');
+    setActiveTab('list');
   };
 
   const handleCopyMarkdownSummary = () => {
@@ -97,61 +160,72 @@ export const StoryDrawer: React.FC<StoryDrawerProps> = ({ isOpen, onClose }) => 
       {/* Backdrop */}
       <div 
         onClick={onClose} 
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity" 
+        className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity" 
       />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-white dark:bg-slate-900 shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800 transition-all">
+        <div className="w-screen max-w-md bg-[#0E1326] shadow-2xl flex flex-col border-l border-white/10 text-slate-100 transition-all">
           
           {/* Header */}
-          <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="p-5 border-b border-white/10 flex items-center justify-between">
             <div>
-              <h2 className="font-heading font-bold text-lg text-slate-900 dark:text-white">
+              <h2 className="font-heading font-bold text-lg text-white">
                 Sprint Backlog
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-400">
                 {room.stories.length} stories in this session
               </p>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex border-b border-slate-200 dark:border-slate-800 px-5 pt-2">
+          <div className="flex border-b border-white/10 px-4 pt-2 overflow-x-auto scrollbar-none gap-1">
             <button
               onClick={() => setActiveTab('list')}
-              className={`pb-2.5 px-3 text-xs font-semibold cursor-pointer border-b-2 transition ${
+              className={`pb-2.5 px-3 text-xs font-semibold cursor-pointer border-b-2 transition whitespace-nowrap ${
                 activeTab === 'list'
-                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                  ? 'border-violet-500 text-violet-300'
+                  : 'border-transparent text-slate-400 hover:text-white'
               }`}
             >
               Stories ({room.stories.length})
             </button>
             <button
-              onClick={() => setActiveTab('add')}
-              className={`pb-2.5 px-3 text-xs font-semibold cursor-pointer border-b-2 transition ${
-                activeTab === 'add'
-                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
+              onClick={() => setActiveTab('import-url')}
+              className={`pb-2.5 px-3 text-xs font-semibold cursor-pointer border-b-2 transition whitespace-nowrap flex items-center space-x-1 ${
+                activeTab === 'import-url'
+                  ? 'border-violet-500 text-violet-300'
+                  : 'border-transparent text-slate-400 hover:text-white'
               }`}
             >
-              + Add Story
+              <DownloadCloud className="w-3.5 h-3.5" />
+              <span>Import URL</span>
             </button>
             <button
-              onClick={() => setActiveTab('import')}
-              className={`pb-2.5 px-3 text-xs font-semibold cursor-pointer border-b-2 transition ${
-                activeTab === 'import'
-                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
+              onClick={() => setActiveTab('add')}
+              className={`pb-2.5 px-3 text-xs font-semibold cursor-pointer border-b-2 transition whitespace-nowrap ${
+                activeTab === 'add'
+                  ? 'border-violet-500 text-violet-300'
+                  : 'border-transparent text-slate-400 hover:text-white'
               }`}
             >
-              Bulk Import
+              + Manual
+            </button>
+            <button
+              onClick={() => setActiveTab('import-bulk')}
+              className={`pb-2.5 px-3 text-xs font-semibold cursor-pointer border-b-2 transition whitespace-nowrap ${
+                activeTab === 'import-bulk'
+                  ? 'border-violet-500 text-violet-300'
+                  : 'border-transparent text-slate-400 hover:text-white'
+              }`}
+            >
+              Bulk CSV
             </button>
           </div>
 
@@ -162,18 +236,18 @@ export const StoryDrawer: React.FC<StoryDrawerProps> = ({ isOpen, onClose }) => 
               <div className="space-y-3">
                 {room.stories.length === 0 ? (
                   <div className="text-center py-10">
-                    <FileText className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                    <FileText className="w-10 h-10 mx-auto text-slate-600 mb-2" />
+                    <p className="text-sm font-medium text-slate-300">
                       No stories in the backlog yet.
                     </p>
                     <p className="text-xs text-slate-400 mt-1">
-                      Add tickets one by one or paste a batch from Jira.
+                      Import from Azure DevOps/Jira or add manually.
                     </p>
                     <button
-                      onClick={() => setActiveTab('add')}
-                      className="mt-4 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition cursor-pointer"
+                      onClick={() => setActiveTab('import-url')}
+                      className="mt-4 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-500 transition cursor-pointer"
                     >
-                      Create First Story
+                      Import from ADO / Jira
                     </button>
                   </div>
                 ) : (
@@ -185,8 +259,8 @@ export const StoryDrawer: React.FC<StoryDrawerProps> = ({ isOpen, onClose }) => 
                         key={s.id}
                         className={`p-3.5 rounded-2xl border transition-all ${
                           isActive
-                            ? 'bg-indigo-50/80 dark:bg-indigo-950/50 border-indigo-400 dark:border-indigo-700 ring-2 ring-indigo-500/20 shadow-sm'
-                            : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                            ? 'bg-violet-950/40 border-violet-500/60 ring-1 ring-violet-500/40 shadow-md'
+                            : 'bg-white/5 border-white/10 hover:border-white/20'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -196,28 +270,28 @@ export const StoryDrawer: React.FC<StoryDrawerProps> = ({ isOpen, onClose }) => 
                                 #{idx + 1}
                               </span>
                               {s.points ? (
-                                <span className="inline-flex items-center text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded">
+                                <span className="inline-flex items-center text-[10px] font-bold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30">
                                   <CheckCircle2 className="w-2.5 h-2.5 mr-1" />
                                   {s.points} pts
                                 </span>
                               ) : (
-                                <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded">
+                                <span className="text-[10px] font-medium text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">
                                   Pending
                                 </span>
                               )}
                               {isActive && (
-                                <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-950 px-2 py-0.5 rounded">
-                                  Pointing Now
+                                <span className="text-[10px] font-bold text-violet-300 bg-violet-500/20 px-2 py-0.5 rounded border border-violet-500/30">
+                                  Pointing
                                 </span>
                               )}
                             </div>
 
-                            <h4 className="font-heading font-semibold text-sm text-slate-800 dark:text-slate-100 leading-snug">
+                            <h4 className="font-heading font-semibold text-sm text-white leading-snug">
                               {s.title}
                             </h4>
 
                             {s.description && (
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                              <p className="text-xs text-slate-400 mt-1 line-clamp-2">
                                 {s.description}
                               </p>
                             )}
@@ -227,7 +301,7 @@ export const StoryDrawer: React.FC<StoryDrawerProps> = ({ isOpen, onClose }) => 
                             {!isActive && (
                               <button
                                 onClick={() => setActiveStory(s.id)}
-                                className="px-2.5 py-1 rounded-lg text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 transition cursor-pointer"
+                                className="px-2.5 py-1 rounded-lg text-xs font-semibold text-violet-300 hover:bg-violet-600/20 transition cursor-pointer"
                                 title="Vote on this story"
                               >
                                 Point
@@ -236,7 +310,7 @@ export const StoryDrawer: React.FC<StoryDrawerProps> = ({ isOpen, onClose }) => 
                             {isFacilitator && (
                               <button
                                 onClick={() => deleteStory(s.id)}
-                                className="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                                className="p-1 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 transition cursor-pointer"
                                 title="Delete story"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -251,11 +325,131 @@ export const StoryDrawer: React.FC<StoryDrawerProps> = ({ isOpen, onClose }) => 
               </div>
             )}
 
-            {/* TAB: ADD STORY */}
+            {/* TAB: IMPORT FROM URL (ADO/JIRA) */}
+            {activeTab === 'import-url' && (
+              <div className="space-y-4">
+                <form onSubmit={handleFetchStory} className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      ADO / Jira Issue URL
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                        <LinkIcon className="w-4 h-4" />
+                      </div>
+                      <input
+                        type="url"
+                        value={importUrl}
+                        onChange={e => setImportUrl(e.target.value)}
+                        placeholder="https://dev.azure.com/... or https://domain.atlassian.net/browse/..."
+                        required
+                        className="w-full pl-9 pr-3 py-2.5 rounded-xl text-xs bg-white/5 border border-white/10 focus:border-violet-500 focus:outline-none text-white placeholder-slate-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-semibold text-slate-300">
+                        PAT / API Token
+                      </label>
+                      <span className="text-[10px] text-slate-400">Stored in browser</span>
+                    </div>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                        <Key className="w-4 h-4" />
+                      </div>
+                      <input
+                        type={showToken ? 'text' : 'password'}
+                        value={token}
+                        onChange={e => setToken(e.target.value)}
+                        placeholder="ADO: PAT | Jira: email:api_token"
+                        className="w-full pl-9 pr-9 py-2.5 rounded-xl text-xs bg-white/5 border border-white/10 focus:border-violet-500 focus:outline-none text-white placeholder-slate-500 font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowToken(!showToken)}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white cursor-pointer"
+                      >
+                        {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={importLoading || !importUrl.trim()}
+                    className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-violet-600 hover:bg-violet-500 transition shadow-md shadow-violet-600/30 cursor-pointer flex items-center justify-center space-x-1.5 disabled:opacity-50"
+                  >
+                    {importLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Fetching...</span>
+                      </>
+                    ) : (
+                      <>
+                        <DownloadCloud className="w-4 h-4" />
+                        <span>Fetch Story</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                {importError && (
+                  <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs flex items-start space-x-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+                    <span>{importError}</span>
+                  </div>
+                )}
+
+                {fetchedStory && (
+                  <div className="p-4 rounded-xl bg-white/[0.06] border border-white/10 space-y-2.5">
+                    <div className="flex items-center space-x-2">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                        {fetchedStory.source === 'ado' ? 'ADO' : 'Jira'}
+                      </span>
+                      <span className="text-xs font-mono font-bold text-cyan-400">
+                        #{fetchedStory.id}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {fetchedStory.type}
+                      </span>
+                    </div>
+
+                    <h4 className="font-heading font-bold text-sm text-white">
+                      {fetchedStory.title}
+                    </h4>
+
+                    {fetchedStory.description && (
+                      <p className="text-xs text-slate-400 line-clamp-3">
+                        {fetchedStory.description}
+                      </p>
+                    )}
+
+                    <div className="pt-2 flex items-center justify-end space-x-2 border-t border-white/10">
+                      <button
+                        onClick={() => handleAddFetchedStory(false)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 bg-white/10 hover:bg-white/20 transition cursor-pointer"
+                      >
+                        Add to Backlog
+                      </button>
+                      <button
+                        onClick={() => handleAddFetchedStory(true)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition shadow-sm cursor-pointer"
+                      >
+                        Point Now
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB: MANUAL ADD */}
             {activeTab === 'add' && (
               <form onSubmit={handleAddSingle} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
                     Story Title or Ticket Key *
                   </label>
                   <input
@@ -264,39 +458,39 @@ export const StoryDrawer: React.FC<StoryDrawerProps> = ({ isOpen, onClose }) => 
                     onChange={e => setNewTitle(e.target.value)}
                     placeholder="e.g. AUTH-42: Implement GitHub OAuth login"
                     required
-                    className="w-full px-3 py-2 rounded-xl text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
+                    className="w-full px-3 py-2 rounded-xl text-xs sm:text-sm bg-white/5 border border-white/10 focus:outline-none focus:border-violet-500 text-white placeholder-slate-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
                     Description / Acceptance Criteria (Optional)
                   </label>
                   <textarea
                     value={newDesc}
                     onChange={e => setNewDesc(e.target.value)}
                     rows={4}
-                    placeholder="Summary of requirements, dependencies, or scope..."
-                    className="w-full px-3 py-2 rounded-xl text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
+                    placeholder="Summary of requirements or scope..."
+                    className="w-full px-3 py-2 rounded-xl text-xs sm:text-sm bg-white/5 border border-white/10 focus:outline-none focus:border-violet-500 text-white placeholder-slate-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Jira / GitHub URL (Optional)
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Issue Tracker URL (Optional)
                   </label>
                   <input
                     type="url"
                     value={newUrl}
                     onChange={e => setNewUrl(e.target.value)}
-                    placeholder="https://yourcompany.atlassian.net/browse/PROJ-123"
-                    className="w-full px-3 py-2 rounded-xl text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
+                    placeholder="https://company.atlassian.net/browse/PROJ-123"
+                    className="w-full px-3 py-2 rounded-xl text-xs sm:text-sm bg-white/5 border border-white/10 focus:outline-none focus:border-violet-500 text-white placeholder-slate-500"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-sm cursor-pointer"
+                  className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-violet-600 hover:bg-violet-500 transition shadow-md shadow-violet-600/30 cursor-pointer"
                 >
                   Add Story to Backlog
                 </button>
@@ -304,10 +498,10 @@ export const StoryDrawer: React.FC<StoryDrawerProps> = ({ isOpen, onClose }) => 
             )}
 
             {/* TAB: BULK IMPORT */}
-            {activeTab === 'import' && (
+            {activeTab === 'import-bulk' && (
               <form onSubmit={handleImportBulk} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
                     Paste Story Titles (One per line)
                   </label>
                   <p className="text-[11px] text-slate-400 mb-2">
@@ -319,35 +513,35 @@ export const StoryDrawer: React.FC<StoryDrawerProps> = ({ isOpen, onClose }) => 
                     rows={8}
                     placeholder={`PROJ-101: Setup Docker containerization\nPROJ-102: Add payment webhook verification\nPROJ-103: Refactor user permissions grid`}
                     required
-                    className="w-full font-mono px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"
+                    className="w-full font-mono px-3 py-2 rounded-xl text-xs bg-white/5 border border-white/10 focus:outline-none focus:border-violet-500 text-white placeholder-slate-500"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-sm cursor-pointer inline-flex items-center justify-center space-x-1.5"
+                  className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-violet-600 hover:bg-violet-500 transition shadow-md shadow-violet-600/30 cursor-pointer inline-flex items-center justify-center space-x-1.5"
                 >
                   <UploadCloud className="w-4 h-4" />
-                  <span>Import All Lines as Stories</span>
+                  <span>Import All Lines</span>
                 </button>
               </form>
             )}
           </div>
 
           {/* Footer Actions */}
-          <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center justify-between gap-2">
+          <div className="p-4 border-t border-white/10 bg-white/[0.02] flex items-center justify-between gap-2">
             <button
               onClick={handleCopyMarkdownSummary}
-              className="flex-1 py-2 px-3 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 transition cursor-pointer inline-flex items-center justify-center space-x-1.5"
+              className="flex-1 py-2 px-3 rounded-xl text-xs font-medium text-slate-300 bg-white/5 border border-white/10 hover:bg-white/10 transition cursor-pointer inline-flex items-center justify-center space-x-1.5"
             >
               {copiedSummary ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-emerald-500" />
-                  <span className="text-emerald-600">Copied!</span>
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-emerald-300">Copied!</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-3.5 h-3.5 text-slate-500" />
+                  <Copy className="w-3.5 h-3.5 text-slate-400" />
                   <span>Copy Markdown</span>
                 </>
               )}
@@ -356,7 +550,7 @@ export const StoryDrawer: React.FC<StoryDrawerProps> = ({ isOpen, onClose }) => 
             <a
               href={`/api/rooms/${room.id}/export.csv`}
               download
-              className="flex-1 py-2 px-3 rounded-xl text-xs font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 transition cursor-pointer inline-flex items-center justify-center space-x-1.5 text-center"
+              className="flex-1 py-2 px-3 rounded-xl text-xs font-medium text-violet-300 bg-violet-600/20 border border-violet-500/30 hover:bg-violet-600/30 transition cursor-pointer inline-flex items-center justify-center space-x-1.5 text-center"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export CSV</span>
