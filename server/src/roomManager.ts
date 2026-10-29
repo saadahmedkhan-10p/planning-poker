@@ -167,12 +167,33 @@ export class RoomManager {
     return { room, participant: finalParticipant };
   }
 
+  public setParticipantConnected(roomId: string, participantId: string, connected: boolean): Room | undefined {
+    const room = this.getRoom(roomId);
+    if (!room) return undefined;
+
+    if (room.participants[participantId]) {
+      room.participants[participantId].connected = connected;
+
+      if (!connected && room.facilitatorId === participantId) {
+        const nextLeader = Object.values(room.participants).find(p => p.connected && p.id !== participantId);
+        if (nextLeader) {
+          room.facilitatorId = nextLeader.id;
+          nextLeader.role = 'facilitator';
+        }
+      }
+    }
+
+    room.updatedAt = Date.now();
+    this.scheduleSave();
+    return room;
+  }
+
   public leaveRoom(roomId: string, participantId: string): Room | undefined {
     const room = this.getRoom(roomId);
     if (!room) return undefined;
 
     if (room.participants[participantId]) {
-      room.participants[participantId].connected = false;
+      delete room.participants[participantId];
       
       // If facilitator left, assign next connected estimator or participant as facilitator
       if (room.facilitatorId === participantId) {
@@ -180,6 +201,8 @@ export class RoomManager {
         if (nextLeader) {
           room.facilitatorId = nextLeader.id;
           nextLeader.role = 'facilitator';
+        } else {
+          room.facilitatorId = '';
         }
       }
     }

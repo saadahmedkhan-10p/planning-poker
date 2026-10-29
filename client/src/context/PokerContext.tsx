@@ -252,6 +252,9 @@ export const PokerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!socket || !room) return;
     socket.emit('leave_room', { roomId: room.id });
     setRoom(null);
+    // Clear ?room query param from browser URL so user returns cleanly to the join/home screen
+    const cleanUrl = `${window.location.origin}${window.location.pathname}`;
+    window.history.replaceState({}, '', cleanUrl);
   }, [socket, room]);
 
   const castVote = useCallback((vote: string | null) => {

@@ -329,6 +329,18 @@ io.on('connection', (socket: Socket) => {
     broadcastRoomState(roomId);
   });
 
+  // Leave Room
+  socket.on('leave_room', ({ roomId }) => {
+    const meta = socketMeta.get(socket.id);
+    const targetRoomId = roomId || meta?.roomId;
+    if (targetRoomId && meta?.userId) {
+      socket.leave(targetRoomId);
+      roomManager.leaveRoom(targetRoomId, meta.userId);
+      socketMeta.delete(socket.id);
+      broadcastRoomState(targetRoomId);
+    }
+  });
+
   // Cast Vote
   socket.on('cast_vote', ({ roomId, vote }) => {
     const meta = socketMeta.get(socket.id);
@@ -538,7 +550,7 @@ io.on('connection', (socket: Socket) => {
   socket.on('disconnect', () => {
     const meta = socketMeta.get(socket.id);
     if (meta && meta.roomId && meta.userId) {
-      roomManager.leaveRoom(meta.roomId, meta.userId);
+      roomManager.setParticipantConnected(meta.roomId, meta.userId, false);
       broadcastRoomState(meta.roomId);
     }
     socketMeta.delete(socket.id);
