@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { io, Socket } from 'socket.io-client';
 import confetti from 'canvas-confetti';
 import type { 
@@ -126,7 +126,9 @@ export const PokerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     // In dev or prod, connect to VITE_SERVER_URL, localhost:4000, or window.location.origin
     const envServerUrl = (import.meta as any).env?.VITE_SERVER_URL;
-    const socketUrl = envServerUrl || (window.location.port === '5173' ? 'http://localhost:4000' : window.location.origin);
+    // In dev: always point to port 4000 regardless of which Vite port we're on
+    const isDev = ['5173','5174','5175','5176','5177','5178','5179','5180'].includes(window.location.port);
+    const socketUrl = envServerUrl || (isDev ? 'http://localhost:4000' : window.location.origin);
     const newSocket = io(socketUrl, {
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 10,
@@ -135,6 +137,19 @@ export const PokerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     newSocket.on('connect', () => {
       setIsConnected(true);
+      // Flush any join that was attempted before the socket was ready
+      if (pendingJoin.current) {
+        const { roomId, name, role, avatarColor } = pendingJoin.current;
+        pendingJoin.current = null;
+        const user = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '{}');
+        const participant = {
+          id: user.id,
+          name: name.trim() || user.name || 'Anonymous',
+          role: role || user.role || 'estimator',
+          avatarColor: avatarColor || user.avatarColor || AVATAR_COLORS[0]
+        };
+        newSocket.emit('join_room', { roomId, participant });
+      }
     });
 
     newSocket.on('disconnect', () => {
@@ -207,22 +222,30 @@ export const PokerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return PRESET_DECKS[deckType] || PRESET_DECKS.fibonacci;
   }, [room]);
 
+  const pendingJoin = useRef<{ roomId: string; name: string; role?: Participant['role']; avatarColor?: string } | null>(null);
+
   // Actions
   const joinRoom = useCallback((roomId: string, name: string, role?: Participant['role'], avatarColor?: string) => {
-    if (!socket || !currentUser) return;
+    if (!socket) return;
 
     const updatedUser: UserProfile = {
-      ...currentUser,
-      name: name.trim() || currentUser.name || 'Anonymous',
-      role: role || currentUser.role,
-      avatarColor: avatarColor || currentUser.avatarColor
+      ...currentUser!,
+      name: name.trim() || currentUser?.name || 'Anonymous',
+      role: role || currentUser?.role || 'estimator',
+      avatarColor: avatarColor || currentUser?.avatarColor || AVATAR_COLORS[0]
     };
     setCurrentUser(updatedUser);
 
-    socket.emit('join_room', {
-      roomId,
-      participant: updatedUser
-    });
+    const doJoin = (s: typeof socket) => {
+      s.emit('join_room', { roomId, participant: updatedUser });
+    };
+
+    if (socket.connected) {
+      doJoin(socket);
+    } else {
+      // Queue until connected
+      pendingJoin.current = { roomId, name, role, avatarColor };
+    }
   }, [socket, currentUser]);
 
   const leaveRoom = useCallback(() => {

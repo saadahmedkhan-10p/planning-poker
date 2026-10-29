@@ -1,15 +1,7 @@
 import React, { useState } from 'react';
 import { usePoker } from '../context/PokerContext';
 import type { ParticipantRole } from '../types/poker';
-import { 
-  Sparkles, 
-  Users, 
-  Check, 
-  ArrowRight, 
-  PlusCircle, 
-  LogIn, 
-  Eye
-} from 'lucide-react';
+import { Users, Eye, Check } from 'lucide-react';
 
 const AVATAR_COLORS = [
   '#7C3AED', '#6D28D9', '#06B6D4', '#059669', 
@@ -24,7 +16,6 @@ interface JoinModalProps {
 export const JoinModal: React.FC<JoinModalProps> = ({ initialRoomId, onSelectRoom }) => {
   const { currentUser, joinRoom } = usePoker();
 
-  // Lock to 'join' mode when an invite link room ID is present
   const isInviteLink = Boolean(initialRoomId);
   const [mode, setMode] = useState<'create' | 'join'>(isInviteLink ? 'join' : 'create');
   const [roomIdInput, setRoomIdInput] = useState(initialRoomId || '');
@@ -51,99 +42,123 @@ export const JoinModal: React.FC<JoinModalProps> = ({ initialRoomId, onSelectRoo
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-md glass rounded-2xl shadow-2xl p-6 sm:p-8 transition-all border border-white/10 text-slate-100">
-        
-        {/* Header Branding with Violet Gradient */}
+    <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div 
+        className="relative w-full max-w-[420px] rounded-xl text-[#E6EDF3] transition-all"
+        style={{
+          background: '#161B22',
+          border: '1px solid #30363D',
+          borderRadius: '12px',
+          padding: '32px'
+        }}
+      >
+        {/* Logo & Header */}
         <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 mx-auto flex items-center justify-center text-white shadow-lg shadow-violet-600/30 mb-3 border border-violet-400/30">
-            <Sparkles className="w-6 h-6" />
+          <div className="flex items-center justify-center gap-2 mb-1.5">
+            <span className="text-[#7C3AED] text-xl font-bold leading-none">♠</span>
+            <span className="font-semibold text-xl tracking-tight text-[#E6EDF3]">
+              AgilePoint
+            </span>
           </div>
-          <h2 className="font-heading font-extrabold text-2xl tracking-tight bg-gradient-to-r from-violet-400 via-purple-300 to-cyan-400 bg-clip-text text-transparent">
-            AgilePoint
-          </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[#8B949E]">
             {isInviteLink
-              ? "You've been invited! Enter your name to join the session."
-              : 'Real-time planning poker with WebRTC camera pods and ADO/Jira sync.'}
+              ? 'Enter your name to join the session'
+              : 'Real-time planning poker for agile engineering teams'}
           </p>
         </div>
 
-        {/* Mode Toggle (Create vs Join) — hidden when arriving via invite link */}
+        {/* Tab switcher: Create vs Join (hidden if invite link) */}
         {!isInviteLink && (
-          <div className="flex rounded-xl bg-white/5 border border-white/10 p-1 mb-6">
+          <div 
+            className="flex rounded-md p-1 mb-5"
+            style={{ background: '#1C2128', border: '1px solid #30363D' }}
+          >
             <button
               type="button"
               onClick={() => setMode('create')}
-              className={`flex-1 py-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center space-x-1.5 ${
+              className={`flex-1 py-1.5 text-xs font-medium rounded transition cursor-pointer ${
                 mode === 'create'
-                  ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#161B22] text-[#E6EDF3] border border-[#30363D]'
+                  : 'text-[#8B949E] hover:text-[#E6EDF3]'
               }`}
             >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>New Session</span>
+              New Session
             </button>
             <button
               type="button"
               onClick={() => setMode('join')}
-              className={`flex-1 py-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center space-x-1.5 ${
+              className={`flex-1 py-1.5 text-xs font-medium rounded transition cursor-pointer ${
                 mode === 'join'
-                  ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#161B22] text-[#E6EDF3] border border-[#30363D]'
+                  : 'text-[#8B949E] hover:text-[#E6EDF3]'
               }`}
             >
-              <LogIn className="w-3.5 h-3.5" />
-              <span>Join Room</span>
+              Join Room
             </button>
+          </div>
+        )}
+
+        {/* Invite link banner */}
+        {isInviteLink && (
+          <div 
+            className="mb-4 px-3 py-2 rounded-md text-xs text-[#8B949E] flex items-center justify-between"
+            style={{ background: '#1C2128', border: '1px solid #30363D' }}
+          >
+            <span>📎 Joining room <strong className="text-[#E6EDF3] font-mono">{roomIdInput}</strong></span>
           </div>
         )}
 
         {/* Form */}
         <form onSubmit={handleJoin} className="space-y-4">
-          {/* Room Name or Room Code */}
-          {mode === 'create' ? (
+          {!isInviteLink && mode === 'create' && (
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Session / Sprint Name
+              <label className="block text-xs font-medium text-[#8B949E] mb-1.5">
+                Session Name
               </label>
               <input
                 type="text"
                 value={roomNameInput}
                 onChange={e => setRoomNameInput(e.target.value)}
-                placeholder="e.g. Sprint 42 Pointing"
+                placeholder="e.g. Sprint 42 Planning"
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-violet-500 focus:outline-none transition"
+                className="w-full text-sm placeholder-[#484F58] focus:border-[#6E40C9] focus:outline-none transition"
+                style={{
+                  background: '#0D1117',
+                  border: '1px solid #30363D',
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  color: '#E6EDF3'
+                }}
               />
-            </div>
-          ) : (
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Room Code / ID
-              </label>
-              {isInviteLink ? (
-                /* Locked — room ID comes from invite link */
-                <div className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-violet-600/10 border border-violet-500/30 text-violet-300 font-mono flex items-center justify-between">
-                  <span className="truncate">{roomIdInput}</span>
-                  <span className="text-[10px] text-violet-400 ml-2 shrink-0 font-sans">Invite link ✓</span>
-                </div>
-              ) : (
-                <input
-                  type="text"
-                  value={roomIdInput}
-                  onChange={e => setRoomIdInput(e.target.value)}
-                  placeholder="e.g. swift-sprint-104"
-                  required
-                  className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-violet-500 focus:outline-none font-mono transition"
-                />
-              )}
             </div>
           )}
 
-          {/* User Display Name */}
+          {!isInviteLink && mode === 'join' && (
+            <div>
+              <label className="block text-xs font-medium text-[#8B949E] mb-1.5">
+                Room Code / ID
+              </label>
+              <input
+                type="text"
+                value={roomIdInput}
+                onChange={e => setRoomIdInput(e.target.value)}
+                placeholder="e.g. sprint-42-819"
+                required
+                className="w-full text-sm font-mono placeholder-[#484F58] focus:border-[#6E40C9] focus:outline-none transition"
+                style={{
+                  background: '#0D1117',
+                  border: '1px solid #30363D',
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  color: '#E6EDF3'
+                }}
+              />
+            </div>
+          )}
+
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
-              Your Name / Handle *
+            <label className="block text-xs font-medium text-[#8B949E] mb-1.5">
+              Your Name
             </label>
             <input
               type="text"
@@ -151,47 +166,56 @@ export const JoinModal: React.FC<JoinModalProps> = ({ initialRoomId, onSelectRoo
               onChange={e => setDisplayName(e.target.value)}
               placeholder="e.g. Alex Morgan"
               required
-              className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-violet-500 focus:outline-none transition"
+              className="w-full text-sm placeholder-[#484F58] focus:border-[#6E40C9] focus:outline-none transition"
+              style={{
+                background: '#0D1117',
+                border: '1px solid #30363D',
+                borderRadius: '6px',
+                padding: '8px 12px',
+                color: '#E6EDF3'
+              }}
             />
           </div>
 
-          {/* Role Toggle Pill Switcher */}
+          {/* Role selector */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-              Your Role in Room
+            <label className="block text-xs font-medium text-[#8B949E] mb-1.5">
+              Role
             </label>
             <div className="grid grid-cols-2 gap-2">
               <div
                 onClick={() => setRole('estimator')}
-                className={`p-3 rounded-xl border text-center cursor-pointer transition-all ${
-                  role === 'estimator'
-                    ? 'border-violet-500 bg-violet-600/20 ring-1 ring-violet-500/50 text-white'
-                    : 'border-white/10 bg-white/[0.02] hover:border-white/20 text-slate-400'
-                }`}
+                className="p-3 text-center cursor-pointer transition"
+                style={{
+                  background: role === 'estimator' ? 'rgba(124, 58, 237, 0.08)' : '#0D1117',
+                  border: role === 'estimator' ? '1px solid #7C3AED' : '1px solid #30363D',
+                  borderRadius: '8px'
+                }}
               >
-                <Users className={`w-4 h-4 mx-auto mb-1 ${role === 'estimator' ? 'text-violet-400' : 'text-slate-500'}`} />
-                <span className="font-heading font-bold text-xs block">Estimator</span>
-                <span className="text-[10px] text-slate-400">Votes on points</span>
+                <Users className={`w-4 h-4 mx-auto mb-1 ${role === 'estimator' ? 'text-[#7C3AED]' : 'text-[#8B949E]'}`} />
+                <span className="font-medium text-xs block text-[#E6EDF3]">Estimator</span>
+                <span className="text-[11px] text-[#8B949E]">Votes on points</span>
               </div>
 
               <div
                 onClick={() => setRole('observer')}
-                className={`p-3 rounded-xl border text-center cursor-pointer transition-all ${
-                  role === 'observer'
-                    ? 'border-violet-500 bg-violet-600/20 ring-1 ring-violet-500/50 text-white'
-                    : 'border-white/10 bg-white/[0.02] hover:border-white/20 text-slate-400'
-                }`}
+                className="p-3 text-center cursor-pointer transition"
+                style={{
+                  background: role === 'observer' ? 'rgba(124, 58, 237, 0.08)' : '#0D1117',
+                  border: role === 'observer' ? '1px solid #7C3AED' : '1px solid #30363D',
+                  borderRadius: '8px'
+                }}
               >
-                <Eye className={`w-4 h-4 mx-auto mb-1 ${role === 'observer' ? 'text-violet-400' : 'text-slate-500'}`} />
-                <span className="font-heading font-bold text-xs block">Observer</span>
-                <span className="text-[10px] text-slate-400">Spectates only</span>
+                <Eye className={`w-4 h-4 mx-auto mb-1 ${role === 'observer' ? 'text-[#7C3AED]' : 'text-[#8B949E]'}`} />
+                <span className="font-medium text-xs block text-[#E6EDF3]">Observer</span>
+                <span className="text-[11px] text-[#8B949E]">Spectates only</span>
               </div>
             </div>
           </div>
 
-          {/* Avatar Color Swatches */}
+          {/* Avatar color swatches */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-medium text-[#8B949E] mb-1.5">
               Avatar Color
             </label>
             <div className="flex items-center justify-between gap-1.5">
@@ -200,27 +224,35 @@ export const JoinModal: React.FC<JoinModalProps> = ({ initialRoomId, onSelectRoo
                   key={c}
                   type="button"
                   onClick={() => setAvatarColor(c)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110 cursor-pointer shadow-sm relative"
+                  className="w-[28px] h-[28px] rounded-full flex items-center justify-center transition hover:opacity-90 cursor-pointer"
                   style={{ backgroundColor: c }}
                 >
                   {avatarColor === c && (
-                    <Check className="w-4 h-4 text-white drop-shadow" />
+                    <Check className="w-3.5 h-3.5 text-white" />
                   )}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Primary Button */}
-          <button
-            type="submit"
-            className="w-full mt-4 py-3 rounded-xl text-sm font-semibold text-white bg-violet-600 hover:bg-violet-500 transition shadow-lg shadow-violet-600/30 cursor-pointer inline-flex items-center justify-center space-x-2"
-          >
-            <span>{mode === 'create' ? 'Start Session' : isInviteLink ? 'Join Session' : 'Enter Session'}</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          {/* Submit button */}
+          <div className="pt-2">
+            <button
+              type="submit"
+              className="w-full text-sm font-medium transition cursor-pointer text-white"
+              style={{
+                background: '#7C3AED',
+                borderRadius: '6px',
+                padding: '10px 16px',
+                border: 'none'
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#6D28D9')}
+              onMouseLeave={e => (e.currentTarget.style.background = '#7C3AED')}
+            >
+              {mode === 'create' ? 'Create Session' : 'Join Session'}
+            </button>
+          </div>
         </form>
-
       </div>
     </div>
   );

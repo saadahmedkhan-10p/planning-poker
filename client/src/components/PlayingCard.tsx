@@ -24,89 +24,114 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
   highlightConsensus = false
 }) => {
   // Dimensions
-  const sizeClasses = {
-    sm: 'w-12 h-16 sm:w-14 sm:h-20 text-sm sm:text-base rounded-xl',
-    md: 'w-16 h-24 sm:w-20 sm:h-28 text-lg sm:text-2xl rounded-2xl',
-    lg: 'w-20 h-28 sm:w-24 sm:h-36 text-2xl sm:text-3xl rounded-2xl'
-  };
+  const dimensions = {
+    sm: { width: '40px', height: '56px', fontSize: '13px', radius: '6px' },
+    md: { width: '52px', height: '72px', fontSize: '18px', radius: '8px' },
+    lg: { width: '80px', height: '108px', fontSize: '28px', radius: '8px' }
+  }[size];
 
   const cornerSize = {
-    sm: 'text-[9px] top-1 left-1.5',
-    md: 'text-[11px] top-1.5 left-2',
-    lg: 'text-xs top-2 left-2.5'
-  };
+    sm: 'text-[8px] top-0.5 left-1',
+    md: 'text-[9px] top-1 left-1.5',
+    lg: 'text-[11px] top-1.5 left-2'
+  }[size];
 
-  // Interactive states for selectable cards (deck hand)
-  const interactiveClasses = onClick && !disabled
-    ? 'cursor-pointer hover:-translate-y-2 hover:shadow-xl hover:border-violet-500/50 transition-all duration-200'
-    : '';
+  const cornerSizeBottom = {
+    sm: 'text-[8px] bottom-0.5 right-1',
+    md: 'text-[9px] bottom-1 right-1.5',
+    lg: 'text-[11px] bottom-1.5 right-2'
+  }[size];
 
-  const selectedClasses = isSelected
-    ? 'ring-2 ring-violet-500 border-violet-500 -translate-y-3 shadow-xl shadow-violet-500/30'
-    : 'border-white/10';
-
-  // If this card is an unrevealed opponent card
   const isFaceDown = isVoted && !isRevealed;
 
   return (
     <div
       onClick={!disabled && onClick ? onClick : undefined}
-      className={`relative select-none perspective-1000 ${sizeClasses[size]} ${interactiveClasses} ${selectedClasses} group`}
+      style={{
+        width: dimensions.width,
+        height: dimensions.height,
+        cursor: !disabled && onClick ? 'pointer' : 'default',
+        transform: isSelected ? 'translateY(-4px)' : 'none',
+        transition: 'transform 150ms ease'
+      }}
+      className="relative select-none perspective-1000 group shrink-0"
     >
       <div
-        className={`w-full h-full transition-transform duration-500 preserve-3d relative ${
+        className={`w-full h-full transition-transform duration-300 preserve-3d relative ${
           isRevealed || isSelected || !isFaceDown ? '' : 'rotate-y-180'
         }`}
       >
-        {/* FRONT OF CARD (Value Visible) */}
+        {/* FRONT OF CARD */}
         <div
-          className={`absolute inset-0 backface-hidden rounded-inherit border flex flex-col items-center justify-center font-heading font-extrabold transition-all ${
-            highlightConsensus
-              ? 'bg-gradient-to-br from-emerald-950/80 to-emerald-900/60 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-500/50'
+          className="absolute inset-0 backface-hidden flex flex-col items-center justify-center font-semibold transition-colors"
+          style={{
+            background: highlightConsensus
+              ? 'rgba(63, 185, 80, 0.08)'
               : isSelected
-              ? 'bg-gradient-to-br from-violet-950/90 to-slate-900 border-violet-500 text-violet-300 shadow-lg shadow-violet-500/20'
-              : 'bg-gradient-to-br from-slate-800/90 to-slate-900/95 border-white/10 text-slate-100 hover:border-white/20'
-          }`}
+              ? 'rgba(124, 58, 237, 0.12)'
+              : '#1C2128',
+            border: highlightConsensus
+              ? '1px solid #3FB950'
+              : isSelected
+              ? '1px solid #7C3AED'
+              : '1px solid #30363D',
+            boxShadow: isSelected ? '0 0 0 1px #7C3AED' : 'none',
+            borderRadius: dimensions.radius,
+            color: highlightConsensus ? '#3FB950' : isSelected ? '#E6EDF3' : '#E6EDF3'
+          }}
         >
           {/* Top-Left Corner Pip */}
           {value && value !== 'HIDDEN' && (
-            <span className={`absolute font-mono font-bold text-slate-400 ${cornerSize[size]}`}>
+            <span className={`absolute font-mono text-[#8B949E] ${cornerSize}`}>
               {value}
             </span>
           )}
 
           {/* Center Value */}
-          <span className={`leading-none ${isSelected ? 'text-violet-300' : highlightConsensus ? 'text-emerald-300' : 'text-white'}`}>
+          <span 
+            className="leading-none font-semibold"
+            style={{ fontSize: dimensions.fontSize }}
+          >
             {value === 'HIDDEN' ? '?' : value || '—'}
           </span>
 
-          {/* Bottom-Right Pip (inverted) */}
+          {/* Bottom-Right Corner Pip */}
           {value && value !== 'HIDDEN' && (
-            <span className={`absolute font-mono font-bold text-slate-400 rotate-180 ${
-              size === 'sm' ? 'text-[9px] bottom-1 right-1.5' : size === 'md' ? 'text-[11px] bottom-1.5 right-2' : 'text-xs bottom-2 right-2.5'
-            }`}>
+            <span className={`absolute font-mono text-[#8B949E] rotate-180 ${cornerSizeBottom}`}>
               {value}
             </span>
           )}
 
-          {/* Keyboard shortcut hint if provided */}
+          {/* Keyboard shortcut hint */}
           {shortcutKey !== undefined && (
-            <div className="absolute -bottom-2 bg-slate-900 text-slate-400 text-[10px] font-mono px-1.5 py-0.5 rounded-md border border-white/10 opacity-70 group-hover:opacity-100 transition shadow">
+            <div 
+              className="absolute -bottom-2 text-[9px] font-mono px-1 py-0.2 rounded border"
+              style={{
+                background: '#0D1117',
+                borderColor: '#30363D',
+                color: '#8B949E'
+              }}
+            >
               {shortcutKey}
             </div>
           )}
         </div>
 
-        {/* BACK OF CARD (Face Down Pattern) */}
+        {/* BACK OF CARD (Face Down) */}
         <div
-          className="absolute inset-0 backface-hidden rotate-y-180 rounded-inherit border border-violet-500/40 bg-gradient-to-tr from-violet-950 to-slate-950 p-1 flex items-center justify-center overflow-hidden shadow-inner"
+          className="absolute inset-0 backface-hidden rotate-y-180 flex items-center justify-center"
+          style={{
+            background: '#1C2128',
+            backgroundImage: `repeating-linear-gradient(45deg, #1C2128, #1C2128 4px, #22272E 4px, #22272E 8px)`,
+            border: '1px solid #30363D',
+            borderRadius: dimensions.radius
+          }}
         >
-          {/* Intricate Geometric Playing Card Pattern */}
-          <div className="w-full h-full rounded-xl border border-violet-400/20 flex items-center justify-center relative overflow-hidden bg-violet-900/10">
-            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#a78bfa_1px,transparent_1px)] [background-size:8px_8px]" />
-            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-violet-400/40 flex items-center justify-center text-violet-300/80 font-bold text-xs shadow-inner">
-              ✦
-            </div>
+          <div 
+            className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] text-[#8B949E]"
+            style={{ border: '1px solid #30363D', background: '#161B22' }}
+          >
+            ♠
           </div>
         </div>
       </div>

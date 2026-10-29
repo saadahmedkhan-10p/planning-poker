@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { 
-  Sparkles, 
   Share2, 
   Volume2, 
   VolumeX, 
@@ -8,7 +7,6 @@ import {
   Settings, 
   Layers, 
   QrCode, 
-  Users,
   LogOut,
   Camera,
   CameraOff
@@ -30,7 +28,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     room, 
     currentUser, 
     isFacilitator, 
-    isConnected, 
     soundEnabled, 
     toggleSound, 
     leaveRoom,
@@ -54,177 +51,188 @@ export const Navbar: React.FC<NavbarProps> = ({
   const unestimatedCount = room ? room.stories.filter(s => s.status !== 'estimated').length : 0;
 
   return (
-    <header className="sticky top-0 z-30 bg-white/5 backdrop-blur-xl border-b border-white/10 transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        
-        {/* Left: Brand & Room Info */}
-        <div className="flex items-center space-x-3 sm:space-x-4">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-violet-600/30 border border-violet-400/30">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex items-center space-x-1.5">
-              <span className="font-heading font-extrabold text-lg tracking-tight bg-gradient-to-r from-violet-400 via-purple-300 to-cyan-400 bg-clip-text text-transparent">
-                AgilePoint
-              </span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                v2
-              </span>
-            </div>
-          </div>
-
-          {room && (
-            <div className="h-5 w-px bg-white/10 hidden sm:block" />
-          )}
-
-          {room && (
-            <div className="flex items-center space-x-2">
-              <h1 className="font-heading font-semibold text-sm sm:text-base text-slate-200 max-w-[140px] sm:max-w-xs truncate">
-                {room.name}
-              </h1>
-              <span className="font-mono text-xs text-slate-300 bg-white/10 px-3 py-1 rounded-lg border border-white/10 select-all">
-                {room.id}
-              </span>
-            </div>
-          )}
+    <header 
+      style={{
+        background: '#161B22',
+        borderBottom: '1px solid #30363D',
+        height: '52px',
+        padding: '0 16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}
+      className="sticky top-0 z-30 select-none"
+    >
+      {/* Left: Brand & Room ID */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 font-semibold text-[15px] text-[#E6EDF3]">
+          <span className="text-[#7C3AED] leading-none">♠</span>
+          <span>AgilePoint</span>
         </div>
 
-        {/* Center: Live Stats & Camera Action (Desktop) */}
         {room && (
-          <div className="hidden md:flex items-center space-x-3">
-            {/* Live Camera Quick Toggle */}
-            {hasMediaSupport && (
-              <button
-                onClick={toggleCamera}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer border ${
-                  isCameraOn
-                    ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-sm'
-                    : 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10'
-                }`}
-                title={isCameraOn ? 'Turn camera off' : 'Turn camera on'}
-              >
-                {isCameraOn ? (
-                  <>
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 pulse-cyan" />
-                    <Camera className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>Cam Live</span>
-                  </>
-                ) : (
-                  <>
-                    <CameraOff className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Enable Cam</span>
-                  </>
-                )}
-              </button>
-            )}
-
-            {/* Backlog Button */}
-            <button
-              onClick={onOpenStoryDrawer}
-              className="flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer"
-              title="View Backlog & Stories"
+          <div className="flex items-center gap-2">
+            <span 
+              className="text-xs font-mono text-[#8B949E] px-2 py-0.5 rounded"
+              style={{
+                background: '#1C2128',
+                border: '1px solid #30363D',
+                borderRadius: '6px'
+              }}
+              title={`Room code: ${room.id}`}
             >
-              <Layers className="w-3.5 h-3.5 text-violet-400" />
-              <span>Backlog</span>
-              {unestimatedCount > 0 ? (
-                <span className="px-1.5 py-0.2 bg-violet-600 text-white rounded-full text-[10px] font-bold">
-                  {unestimatedCount}
-                </span>
-              ) : (
-                <span className="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 rounded-full text-[10px] font-bold">
-                  ✓
-                </span>
-              )}
-            </button>
+              {room.id}
+            </span>
+          </div>
+        )}
+      </div>
 
-            {/* Live Connected Indicator */}
-            <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 bg-white/5 border border-white/10">
-              <Users className="w-3.5 h-3.5 text-slate-400" />
-              <span>{connectedCount} online</span>
-              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-cyan-400 pulse-cyan' : 'bg-rose-500 animate-pulse'}`} />
-            </div>
+      {/* Center: Session Name & Backlog link */}
+      {room && (
+        <div className="hidden md:flex items-center gap-3">
+          <span className="text-xs font-medium text-[#E6EDF3] max-w-[200px] truncate" title={room.name}>
+            {room.name}
+          </span>
+
+          <button
+            onClick={onOpenStoryDrawer}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-[#8B949E] hover:text-[#E6EDF3] transition cursor-pointer"
+            style={{
+              background: '#1C2128',
+              border: '1px solid #30363D',
+              borderRadius: '6px'
+            }}
+            title="Open Backlog"
+          >
+            <Layers className="w-3.5 h-3.5 text-[#8B949E]" />
+            <span>Backlog</span>
+            {unestimatedCount > 0 ? (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-semibold bg-[#7C3AED] text-white">
+                {unestimatedCount}
+              </span>
+            ) : (
+              <span className="text-[#3FB950] text-[11px]">✓</span>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Right: Controls & Profile */}
+      <div className="flex items-center gap-1.5">
+        {/* Online Indicator */}
+        {room && (
+          <div className="flex items-center gap-1.5 mr-2 text-xs text-[#8B949E]">
+            <span 
+              className="w-2 h-2 rounded-full inline-block"
+              style={{ background: '#3FB950' }}
+            />
+            <span>{connectedCount} online</span>
           </div>
         )}
 
-        {/* Right: Actions */}
-        <div className="flex items-center space-x-1.5 sm:space-x-2">
-          {room && (
-            <>
-              {/* Copy Invite Link */}
-              <button
-                onClick={handleCopyLink}
-                className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-violet-600/30 hover:bg-violet-600/50 border border-violet-500/40 transition cursor-pointer"
-                title="Copy Room Link"
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="hidden sm:inline text-emerald-300">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Share2 className="w-3.5 h-3.5 text-violet-300" />
-                    <span className="hidden sm:inline">Invite</span>
-                  </>
-                )}
-              </button>
-
-              {/* QR Code */}
-              <button
-                onClick={onOpenShareModal}
-                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/10 transition cursor-pointer"
-                title="Show QR Code"
-              >
-                <QrCode className="w-4 h-4" />
-              </button>
-
-              {/* Settings (Facilitator only) */}
-              {isFacilitator && (
-                <button
-                  onClick={onOpenSettings}
-                  className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/10 transition cursor-pointer"
-                  title="Session Settings"
-                >
-                  <Settings className="w-4 h-4" />
-                </button>
-              )}
-            </>
-          )}
-
-          {/* Sound Toggle */}
+        {/* Camera Toggle */}
+        {hasMediaSupport && (
           <button
-            onClick={toggleSound}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/10 transition cursor-pointer"
-            title={soundEnabled ? 'Mute Sounds' : 'Enable Sounds'}
+            onClick={toggleCamera}
+            className="w-8 h-8 rounded flex items-center justify-center transition cursor-pointer text-[#8B949E] hover:text-[#E6EDF3] hover:bg-[#1C2128]"
+            style={{
+              border: isCameraOn ? '1px solid #7C3AED' : '1px solid #30363D',
+              borderRadius: '6px',
+              background: isCameraOn ? 'rgba(124, 58, 237, 0.1)' : 'transparent',
+              color: isCameraOn ? '#E6EDF3' : '#8B949E'
+            }}
+            title={isCameraOn ? 'Turn camera off' : 'Turn camera on'}
           >
-            {soundEnabled ? (
-              <Volume2 className="w-4 h-4 text-violet-400" />
-            ) : (
-              <VolumeX className="w-4 h-4 text-slate-500" />
-            )}
+            {isCameraOn ? <Camera className="w-3.5 h-3.5 text-[#7C3AED]" /> : <CameraOff className="w-3.5 h-3.5" />}
           </button>
+        )}
 
-          {/* User Profile Avatar & Leave Button */}
-          {room && currentUser && (
-            <div className="flex items-center pl-1 sm:pl-2">
-              <div 
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold ring-2 ring-white/20 shadow-md"
-                style={{ backgroundColor: currentUser.avatarColor }}
-                title={`${currentUser.name} (${currentUser.role})`}
-              >
-                {currentUser.name.charAt(0).toUpperCase() || 'U'}
-              </div>
-              <button
-                onClick={leaveRoom}
-                className="ml-1 sm:ml-2 p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 transition cursor-pointer"
-                title="Leave Room"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
+        {/* Mute/Sound Toggle */}
+        <button
+          onClick={toggleSound}
+          className="w-8 h-8 rounded flex items-center justify-center transition cursor-pointer text-[#8B949E] hover:text-[#E6EDF3] hover:bg-[#1C2128]"
+          style={{
+            border: '1px solid #30363D',
+            borderRadius: '6px',
+            background: 'transparent'
+          }}
+          title={soundEnabled ? 'Mute Sounds' : 'Enable Sounds'}
+        >
+          {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5 text-[#484F58]" />}
+        </button>
+
+        {/* Share Link */}
+        {room && (
+          <button
+            onClick={handleCopyLink}
+            className="w-8 h-8 rounded flex items-center justify-center transition cursor-pointer text-[#8B949E] hover:text-[#E6EDF3] hover:bg-[#1C2128]"
+            style={{
+              border: '1px solid #30363D',
+              borderRadius: '6px',
+              background: 'transparent'
+            }}
+            title={copied ? 'Link Copied!' : 'Copy Room Link'}
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-[#3FB950]" /> : <Share2 className="w-3.5 h-3.5" />}
+          </button>
+        )}
+
+        {/* QR Code */}
+        {room && (
+          <button
+            onClick={onOpenShareModal}
+            className="w-8 h-8 rounded flex items-center justify-center transition cursor-pointer text-[#8B949E] hover:text-[#E6EDF3] hover:bg-[#1C2128]"
+            style={{
+              border: '1px solid #30363D',
+              borderRadius: '6px',
+              background: 'transparent'
+            }}
+            title="Show QR Code"
+          >
+            <QrCode className="w-3.5 h-3.5" />
+          </button>
+        )}
+
+        {/* Settings (Facilitator only) */}
+        {room && isFacilitator && (
+          <button
+            onClick={onOpenSettings}
+            className="w-8 h-8 rounded flex items-center justify-center transition cursor-pointer text-[#8B949E] hover:text-[#E6EDF3] hover:bg-[#1C2128]"
+            style={{
+              border: '1px solid #30363D',
+              borderRadius: '6px',
+              background: 'transparent'
+            }}
+            title="Session Settings"
+          >
+            <Settings className="w-3.5 h-3.5" />
+          </button>
+        )}
+
+        {/* User avatar & leave */}
+        {currentUser && (
+          <div className="flex items-center gap-1.5 pl-1">
+            <div 
+              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white select-none"
+              style={{ backgroundColor: currentUser.avatarColor }}
+              title={`${currentUser.name} (${currentUser.role})`}
+            >
+              {currentUser.name.charAt(0).toUpperCase() || 'U'}
             </div>
-          )}
-        </div>
-
+            <button
+              onClick={leaveRoom}
+              className="w-8 h-8 rounded flex items-center justify-center transition cursor-pointer text-[#8B949E] hover:text-[#F85149] hover:bg-[#1C2128]"
+              style={{
+                border: '1px solid #30363D',
+                borderRadius: '6px',
+                background: 'transparent'
+              }}
+              title="Leave Room"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );

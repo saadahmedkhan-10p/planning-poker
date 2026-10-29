@@ -1,6 +1,6 @@
 import React from 'react';
 import { usePoker } from '../context/PokerContext';
-import { Check, Flame, MessageSquare, RotateCcw, Award, ArrowRight } from 'lucide-react';
+import { Check, RotateCcw, ArrowRight } from 'lucide-react';
 
 export const ConsensusResults: React.FC = () => {
   const { room, isFacilitator, setStoryPoints, resetVotes, activeDeck, setActiveStory } = usePoker();
@@ -50,201 +50,207 @@ export const ConsensusResults: React.FC = () => {
   const isUnanimous = stats.agreementPercent === 100 && stats.totalVotes >= 2;
   const isHighAgreement = (stats.agreementPercent || 0) >= 75 && !isUnanimous;
 
-  return (
-    <div className="w-full max-w-4xl mx-auto my-4 rounded-3xl glass-card border border-white/10 p-5 sm:p-6 transition-all text-slate-100 shadow-2xl">
-      {/* Top Banner: Consensus Status */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-5 border-b border-white/10">
-        <div className="flex items-center space-x-3 text-center sm:text-left">
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ${
-            isUnanimous 
-              ? 'bg-emerald-500 text-white shadow-emerald-500/40 ring-4 ring-emerald-500/20' 
-              : isHighAgreement
-              ? 'bg-violet-600 text-white shadow-violet-600/40'
-              : 'bg-amber-500 text-white shadow-amber-500/40'
-          }`}>
-            {isUnanimous ? <Award className="w-6 h-6" /> : isHighAgreement ? <Check className="w-6 h-6" /> : <Flame className="w-6 h-6" />}
-          </div>
+  const statusColor = isUnanimous ? '#3FB950' : isHighAgreement ? '#D29922' : '#F85149';
+  const statusLabel = isUnanimous ? 'Unanimous Agreement' : isHighAgreement ? 'Strong Agreement' : 'Split Votes';
 
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
-                isUnanimous 
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
-                  : isHighAgreement
-                  ? 'bg-violet-500/20 text-violet-300 border-violet-500/30'
-                  : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-              }`}>
-                {isUnanimous ? '🎉 Unanimous Agreement' : isHighAgreement ? 'Strong Alignment' : 'Split Votes — Discussion Needed'}
-              </span>
-              <span className="text-xs font-mono font-semibold text-slate-400">
-                {stats.agreementPercent}% agreement
-              </span>
-            </div>
-            <h3 className="font-heading font-bold text-xl text-white mt-1">
-              {isUnanimous
-                ? `The team unanimously voted ${stats.mode} points!`
-                : isHighAgreement
-                ? `Most of the team favors ${stats.mode} points.`
-                : 'Different perspectives detected. Discuss assumptions before deciding.'}
-            </h3>
-          </div>
+  return (
+    <div 
+      className="w-full max-w-5xl mx-auto mb-4"
+      style={{
+        background: '#161B22',
+        border: '1px solid #30363D',
+        borderRadius: '8px',
+        padding: '20px'
+      }}
+    >
+      {/* Consensus Banner: Single horizontal bar */}
+      <div 
+        className="flex items-center justify-between pb-3 mb-4 border-b"
+        style={{ borderColor: '#30363D' }}
+      >
+        <div className="flex items-center gap-2">
+          <span 
+            className="w-2.5 h-2.5 rounded-full inline-block"
+            style={{ background: statusColor }}
+          />
+          <span className="font-semibold text-sm" style={{ color: statusColor }}>
+            {statusLabel}
+          </span>
+          <span className="text-xs text-[#8B949E]">
+            — Most favored: <strong className="text-[#E6EDF3]">{stats.mode || '—'} points</strong>
+          </span>
         </div>
 
-        {/* Facilitator Actions */}
-        {isFacilitator && (
-          <div className="flex items-center space-x-2 flex-wrap gap-y-2 justify-center sm:justify-end">
-            {stats.mode && nextStory && (
-              <button
-                onClick={() => handleAcceptAndNext(stats.mode!)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition shadow-lg shadow-emerald-600/30 cursor-pointer inline-flex items-center space-x-1.5"
-                title={`Save ${stats.mode} pts and advance to next story`}
-              >
-                <Check className="w-3.5 h-3.5" />
-                <span>Accept {stats.mode} & Next</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            )}
-
-            {stats.mode && !nextStory && (
-              <button
-                onClick={() => handleApplyPoints(stats.mode!)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition shadow-lg shadow-emerald-600/30 cursor-pointer inline-flex items-center space-x-1.5"
-              >
-                <Check className="w-3.5 h-3.5" />
-                <span>Accept {stats.mode} Pts</span>
-              </button>
-            )}
-
-            {nextStory && (
-              <button
-                onClick={() => setActiveStory(nextStory.id)}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold text-violet-300 bg-violet-600/20 hover:bg-violet-600/30 transition border border-violet-500/30 cursor-pointer inline-flex items-center space-x-1.5"
-              >
-                <span>Next</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            )}
-
-            {nearestDeckVal && nearestDeckVal !== stats.mode && (
-              <button
-                onClick={() => handleApplyPoints(nearestDeckVal)}
-                className="px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 bg-white/10 hover:bg-white/20 transition border border-white/10 cursor-pointer"
-                title={`Accept nearest deck value (${nearestDeckVal})`}
-              >
-                Nearest ({nearestDeckVal})
-              </button>
-            )}
-
-            <button
-              onClick={resetVotes}
-              className="px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 bg-white/5 hover:bg-white/10 transition border border-white/10 cursor-pointer inline-flex items-center space-x-1"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
-              <span>Revote</span>
-            </button>
-          </div>
-        )}
+        <span className="text-xs font-mono font-medium text-[#8B949E]">
+          {stats.agreementPercent}% agreement
+        </span>
       </div>
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-5">
-        <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 text-center">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            Average (Mean)
-          </span>
-          <div className="font-heading font-extrabold text-2xl text-white mt-0.5">
+      {/* 4-column Stats Row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+        <div 
+          style={{
+            background: '#1C2128',
+            border: '1px solid #30363D',
+            borderRadius: '6px',
+            padding: '12px'
+          }}
+        >
+          <div className="text-[11px] font-medium text-[#8B949E] uppercase tracking-wider">
+            Average
+          </div>
+          <div className="text-[22px] font-semibold text-[#E6EDF3] mt-0.5">
             {stats.average !== null && stats.average !== undefined ? stats.average : '—'}
           </div>
           {nearestDeckVal && (
-            <span className="text-[10px] text-slate-400">
-              Nearest: <strong className="text-violet-400">{nearestDeckVal}</strong>
-            </span>
+            <div className="text-[11px] text-[#8B949E] mt-0.5">
+              Nearest: <span className="text-[#E6EDF3]">{nearestDeckVal}</span>
+            </div>
           )}
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 text-center">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div 
+          style={{
+            background: '#1C2128',
+            border: '1px solid #30363D',
+            borderRadius: '6px',
+            padding: '12px'
+          }}
+        >
+          <div className="text-[11px] font-medium text-[#8B949E] uppercase tracking-wider">
             Median
-          </span>
-          <div className="font-heading font-extrabold text-2xl text-white mt-0.5">
+          </div>
+          <div className="text-[22px] font-semibold text-[#E6EDF3] mt-0.5">
             {stats.median || '—'}
           </div>
-          <span className="text-[10px] text-slate-400">Middle estimate</span>
+          <div className="text-[11px] text-[#8B949E] mt-0.5">
+            Middle estimate
+          </div>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 text-center">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            Mode (Popular)
-          </span>
-          <div className="font-heading font-extrabold text-2xl text-white mt-0.5">
+        <div 
+          style={{
+            background: '#1C2128',
+            border: '1px solid #30363D',
+            borderRadius: '6px',
+            padding: '12px'
+          }}
+        >
+          <div className="text-[11px] font-medium text-[#8B949E] uppercase tracking-wider">
+            Mode
+          </div>
+          <div className="text-[22px] font-semibold text-[#E6EDF3] mt-0.5">
             {stats.mode || '—'}
           </div>
-          <span className="text-[10px] text-slate-400">Most common vote</span>
+          <div className="text-[11px] text-[#8B949E] mt-0.5">
+            Popular vote
+          </div>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 text-center">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            Total Votes
-          </span>
-          <div className="font-heading font-extrabold text-2xl text-white mt-0.5">
+        <div 
+          style={{
+            background: '#1C2128',
+            border: '1px solid #30363D',
+            borderRadius: '6px',
+            padding: '12px'
+          }}
+        >
+          <div className="text-[11px] font-medium text-[#8B949E] uppercase tracking-wider">
+            Votes Cast
+          </div>
+          <div className="text-[22px] font-semibold text-[#E6EDF3] mt-0.5">
             {stats.totalVotes}
           </div>
-          <span className="text-[10px] text-slate-400">Estimators participated</span>
-        </div>
-      </div>
-
-      {/* Vote Distribution Visualizer */}
-      <div className="mt-4 pt-4 border-t border-white/10">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-            Vote Distribution
-          </span>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(stats.voteDistribution).map(([val, count]) => {
-            const pct = Math.round((count / stats.totalVotes) * 100);
-            const isHighest = val === stats.mode;
-
-            return (
-              <div
-                key={val}
-                className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl border transition-all ${
-                  isHighest
-                    ? 'bg-violet-600/30 border-violet-500 text-violet-200 shadow-md shadow-violet-600/20'
-                    : 'bg-white/5 border-white/10 text-slate-300'
-                }`}
-              >
-                <span className="font-heading font-extrabold text-base">{val}</span>
-                <span className="text-xs text-slate-400">
-                  {count} {count === 1 ? 'vote' : 'votes'} ({pct}%)
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Outlier Alignment Prompt */}
-      {stats.outliers && (
-        <div className="mt-4 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs flex items-start space-x-3">
-          <MessageSquare className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-          <div className="leading-relaxed">
-            <strong className="font-semibold text-amber-300">
-              Agile Discussion Suggestion:
-            </strong>{' '}
-            {stats.outliers.lowestVoters && stats.outliers.lowestVoters.length > 0 && (
-              <span>
-                Lowest vote ({stats.outliers.lowestVoters.join(', ')}) vs{' '}
-              </span>
-            )}
-            {stats.outliers.highestVoters && stats.outliers.highestVoters.length > 0 && (
-              <span>
-                highest vote ({stats.outliers.highestVoters.join(', ')}).
-              </span>
-            )}{' '}
-            Inviting different estimators to share assumptions uncovers hidden complexities or simplified approaches!
+          <div className="text-[11px] text-[#8B949E] mt-0.5">
+            Estimators
           </div>
+        </div>
+      </div>
+
+      {/* Simple Vote Distribution */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <span className="text-xs text-[#8B949E] mr-1">Distribution:</span>
+        {Object.entries(stats.voteDistribution).map(([val, count]) => (
+          <span 
+            key={val}
+            className="text-xs px-2.5 py-1 rounded text-[#E6EDF3]"
+            style={{
+              background: '#1C2128',
+              border: val === stats.mode ? '1px solid #7C3AED' : '1px solid #30363D'
+            }}
+          >
+            <strong className="font-semibold">{val}</strong>: {count} {count === 1 ? 'vote' : 'votes'}
+          </span>
+        ))}
+      </div>
+
+      {/* Action Buttons Row */}
+      {isFacilitator && (
+        <div 
+          className="flex items-center justify-end gap-2 pt-3 border-t"
+          style={{ borderColor: '#30363D' }}
+        >
+          {stats.mode && nextStory && (
+            <button
+              onClick={() => handleAcceptAndNext(stats.mode!)}
+              className="text-xs font-medium text-white transition cursor-pointer flex items-center gap-1.5"
+              style={{
+                background: '#7C3AED',
+                borderRadius: '6px',
+                padding: '6px 14px',
+                border: 'none'
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#6D28D9')}
+              onMouseLeave={e => (e.currentTarget.style.background = '#7C3AED')}
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>Accept {stats.mode} & Next</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {stats.mode && !nextStory && (
+            <button
+              onClick={() => handleApplyPoints(stats.mode!)}
+              className="text-xs font-medium text-white transition cursor-pointer flex items-center gap-1.5"
+              style={{
+                background: '#7C3AED',
+                borderRadius: '6px',
+                padding: '6px 14px',
+                border: 'none'
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#6D28D9')}
+              onMouseLeave={e => (e.currentTarget.style.background = '#7C3AED')}
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>Accept {stats.mode} Pts</span>
+            </button>
+          )}
+
+          <button
+            onClick={resetVotes}
+            className="text-xs font-medium text-[#E6EDF3] transition cursor-pointer flex items-center gap-1.5"
+            style={{
+              background: '#1C2128',
+              border: '1px solid #30363D',
+              borderRadius: '6px',
+              padding: '6px 14px'
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#30363D')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#1C2128')}
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-[#8B949E]" />
+            <span>Revote</span>
+          </button>
+
+          {nextStory && (
+            <button
+              onClick={() => setActiveStory(nextStory.id)}
+              className="text-xs text-[#8B949E] hover:text-[#E6EDF3] hover:underline cursor-pointer bg-transparent border-none px-2"
+            >
+              Skip to Next
+            </button>
+          )}
         </div>
       )}
     </div>

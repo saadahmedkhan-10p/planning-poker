@@ -36,7 +36,7 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  // Update URL without page reload when joined — always overwrite any stale params
+  // Update URL without page reload when joined
   const handleSelectRoom = (roomId: string) => {
     const newUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
     window.history.replaceState({ roomId }, '', newUrl);
@@ -50,14 +50,21 @@ export const App: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0B0E1A] text-slate-100 selection:bg-violet-500/30 selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#0D1117] text-[#E6EDF3]">
       
       {/* ERROR TOAST */}
       {errorMessage && (
-        <div className="fixed top-4 right-4 z-50 flex items-center space-x-2 px-4 py-3 rounded-2xl bg-rose-600/90 backdrop-blur-md text-white shadow-2xl text-xs font-semibold animate-in fade-in slide-in-from-top-2 duration-200 border border-rose-500/30">
-          <AlertCircle className="w-4 h-4 shrink-0" />
+        <div 
+          className="fixed top-4 right-4 z-50 flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-xs"
+          style={{
+            background: '#161B22',
+            border: '1px solid #CF222E',
+            color: '#E6EDF3'
+          }}
+        >
+          <AlertCircle className="w-4 h-4 text-[#CF222E] shrink-0" />
           <span>{errorMessage}</span>
-          <button onClick={clearError} className="p-1 hover:bg-white/20 rounded cursor-pointer">
+          <button onClick={clearError} className="p-1 hover:text-white rounded cursor-pointer ml-1 text-[#8B949E]">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -65,13 +72,16 @@ export const App: React.FC = () => {
 
       {/* DISCONNECTED WARNING BANNER */}
       {!isConnected && (
-        <div className="bg-amber-600/90 text-white text-xs font-bold py-1.5 px-4 text-center tracking-wide flex items-center justify-center space-x-2 border-b border-amber-500/30">
+        <div 
+          className="text-xs font-medium py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 text-white"
+          style={{ background: '#9A6700', borderBottom: '1px solid #30363D' }}
+        >
           <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
           <span>Connecting to real-time server...</span>
         </div>
       )}
 
-      {/* MODALS */}
+      {/* JOIN SCREEN */}
       {!hasJoined && (
         <JoinModal 
           initialRoomId={initialRoomId} 
@@ -87,8 +97,8 @@ export const App: React.FC = () => {
             onOpenShareModal={() => setIsShareModalOpen(true)}
           />
 
-          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col justify-between">
-            {/* Top: Active Story Card */}
+          <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-5 flex flex-col justify-between">
+            {/* Active Story Card */}
             <div>
               <ActiveStoryCard 
                 onOpenStoryDrawer={() => setIsStoryDrawerOpen(true)} 
@@ -100,12 +110,12 @@ export const App: React.FC = () => {
                 <ConsensusResults />
               )}
 
-              {/* Center: Poker Table Stadium with WebRTC Video Pods */}
+              {/* Center Table Grid with Participant Pods */}
               <PokerTable />
             </div>
 
             {/* Bottom: Player's Card Hand */}
-            <div className="sticky bottom-0 pt-2 pb-6 bg-gradient-to-t from-[#0B0E1A] via-[#0B0E1A]/95 to-transparent z-20">
+            <div className="sticky bottom-0 pt-2 pb-5 bg-[#0D1117]/95 z-20">
               <CardDeck />
             </div>
           </main>
@@ -137,8 +147,11 @@ export const App: React.FC = () => {
       )}
 
       {/* Footer */}
-      <footer className="py-3 px-4 border-t border-white/10 text-center text-[11px] text-slate-500">
-        AgilePoint Poker v2 • Dark Glass Real-Time Planning Poker with WebRTC & ADO/Jira Sync
+      <footer 
+        className="py-3 px-4 text-center text-xs text-[#8B949E]"
+        style={{ borderTop: '1px solid #30363D' }}
+      >
+        AgilePoint — Real-time planning poker for agile engineering teams
       </footer>
     </div>
   );

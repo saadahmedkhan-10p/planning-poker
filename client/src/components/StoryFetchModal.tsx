@@ -5,13 +5,9 @@ import {
   X, 
   ExternalLink, 
   Loader2, 
-  DownloadCloud, 
   Check, 
-  Key, 
-  Link as LinkIcon, 
   Eye, 
   EyeOff, 
-  FileText,
   AlertCircle 
 } from 'lucide-react';
 
@@ -72,7 +68,6 @@ export const StoryFetchModal: React.FC<StoryFetchModalProps> = ({ isOpen, onClos
     setIsAdded(true);
 
     if (setAsActive) {
-      // Find newly added story or timeout slightly to activate
       setTimeout(() => {
         if (room?.stories) {
           const matching = room.stories.find(s => s.url === fetchedStory.url || s.title.includes(fetchedStory.id));
@@ -85,137 +80,133 @@ export const StoryFetchModal: React.FC<StoryFetchModalProps> = ({ isOpen, onClos
 
     setTimeout(() => {
       onClose();
-    }, 800);
+    }, 600);
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
-      {/* Dark frosted backdrop */}
+    <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
       <div 
-        onClick={onClose} 
-        className="fixed inset-0 bg-black/70 backdrop-blur-md transition-opacity" 
-      />
-
-      {/* Modal Card */}
-      <div className="relative w-full max-w-lg glass-card rounded-2xl p-6 sm:p-7 z-10 transition-all border border-white/10 text-slate-100 shadow-2xl">
-        <div className="flex items-center justify-between pb-4 border-b border-white/10">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-violet-600/30 border border-violet-500/40 flex items-center justify-center text-violet-400">
-              <DownloadCloud className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-heading font-bold text-lg text-white">
-                Import from Azure DevOps / Jira
-              </h3>
-              <p className="text-xs text-slate-400">
-                Directly import work item details into your planning session
-              </p>
-            </div>
-          </div>
+        className="relative w-full max-w-[460px] text-[#E6EDF3] transition-all"
+        style={{
+          background: '#161B22',
+          border: '1px solid #30363D',
+          borderRadius: '12px',
+          padding: '24px'
+        }}
+      >
+        <div className="flex items-center justify-between pb-3 border-b border-[#30363D]">
+          <h3 className="font-semibold text-sm text-[#E6EDF3]">
+            Import Work Item
+          </h3>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+            className="p-1 rounded text-[#8B949E] hover:text-[#E6EDF3] hover:bg-[#1C2128] cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleFetch} className="mt-5 space-y-4">
-          {/* Work Item URL */}
+        <form onSubmit={handleFetch} className="mt-4 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
+            <label className="block text-xs font-medium text-[#8B949E] mb-1">
               Work Item / Issue URL *
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-                <LinkIcon className="w-4 h-4" />
-              </div>
-              <input
-                type="url"
-                value={url}
-                onChange={e => setUrl(e.target.value)}
-                placeholder="https://dev.azure.com/org/proj/_workitems/edit/123 or https://company.atlassian.net/browse/PROJ-42"
-                required
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl text-xs sm:text-sm bg-white/5 border border-white/10 focus:border-violet-500 focus:outline-none text-white placeholder-slate-500"
-              />
-            </div>
+            <input
+              type="url"
+              value={url}
+              onChange={e => setUrl(e.target.value)}
+              placeholder="https://dev.azure.com/... or https://domain.atlassian.net/browse/..."
+              required
+              className="w-full text-xs text-[#E6EDF3] placeholder-[#484F58] focus:border-[#6E40C9] focus:outline-none"
+              style={{
+                background: '#0D1117',
+                border: '1px solid #30363D',
+                borderRadius: '6px',
+                padding: '8px 12px'
+              }}
+            />
           </div>
 
-          {/* PAT / API Token */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-slate-300">
+              <label className="block text-xs font-medium text-[#8B949E]">
                 Personal Access Token (PAT) / API Token
               </label>
-              <span className="text-[10px] text-slate-500">Stored only in your browser</span>
+              <span className="text-[10px] text-[#484F58]">Stored in browser</span>
             </div>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-                <Key className="w-4 h-4" />
-              </div>
               <input
                 type={showToken ? 'text' : 'password'}
                 value={token}
                 onChange={e => setToken(e.target.value)}
-                placeholder="Azure DevOps: PAT | Jira: email:api_token"
-                className="w-full pl-9 pr-10 py-2.5 rounded-xl text-xs sm:text-sm bg-white/5 border border-white/10 focus:border-violet-500 focus:outline-none text-white placeholder-slate-500 font-mono"
+                placeholder="ADO: PAT | Jira: email:api_token"
+                className="w-full text-xs text-[#E6EDF3] placeholder-[#484F58] font-mono pr-8 focus:border-[#6E40C9] focus:outline-none"
+                style={{
+                  background: '#0D1117',
+                  border: '1px solid #30363D',
+                  borderRadius: '6px',
+                  padding: '8px 12px'
+                }}
               />
               <button
                 type="button"
                 onClick={() => setShowToken(!showToken)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white cursor-pointer"
+                className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-[#8B949E] hover:text-[#E6EDF3] cursor-pointer"
               >
-                {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showToken ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
             </div>
-            <p className="text-[11px] text-slate-400 mt-1">
-              For Azure DevOps, create a PAT with Work Items (Read) scope. For Jira Cloud, use <code>email:token</code> format.
-            </p>
           </div>
 
-          {/* Fetch Button */}
           <button
             type="submit"
             disabled={loading || !url.trim()}
-            className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-500 hover:to-violet-600 transition shadow-lg shadow-violet-600/30 cursor-pointer flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full text-xs font-medium text-white transition cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+            style={{
+              background: '#7C3AED',
+              borderRadius: '6px',
+              padding: '8px 14px',
+              border: 'none'
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#6D28D9')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#7C3AED')}
           >
             {loading ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Fetching Story Details...</span>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Fetching Details...</span>
               </>
             ) : (
-              <>
-                <DownloadCloud className="w-4 h-4" />
-                <span>Fetch Work Item</span>
-              </>
+              <span>Fetch Work Item</span>
             )}
           </button>
         </form>
 
-        {/* Error Display */}
         {error && (
-          <div className="mt-4 p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs flex items-start space-x-2">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+          <div 
+            className="mt-3 p-2.5 rounded text-xs text-[#F85149] flex items-start gap-2"
+            style={{ background: 'rgba(248, 81, 73, 0.1)', border: '1px solid #F85149' }}
+          >
+            <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
 
-        {/* Story Preview Card */}
         {fetchedStory && (
-          <div className="mt-5 p-4 rounded-xl bg-white/[0.06] border border-white/10 space-y-3">
+          <div 
+            className="mt-4 p-3 rounded-lg space-y-2"
+            style={{ background: '#1C2128', border: '1px solid #30363D' }}
+          >
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-violet-600/30 text-violet-300 border border-violet-500/30">
-                  {fetchedStory.source === 'ado' ? 'Azure DevOps' : 'Jira Cloud'}
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/10 text-slate-300">
-                  {fetchedStory.type}
-                </span>
-                <span className="text-xs font-mono font-bold text-cyan-400">
+              <div className="flex items-center gap-2">
+                <span 
+                  className="px-1.5 py-0.2 rounded text-[10px] font-mono font-medium"
+                  style={{ background: '#0D1117', color: '#8B949E', border: '1px solid #30363D' }}
+                >
                   #{fetchedStory.id}
                 </span>
+                <span className="text-[11px] text-[#8B949E]">{fetchedStory.type}</span>
               </div>
 
               {fetchedStory.url && (
@@ -223,43 +214,41 @@ export const StoryFetchModal: React.FC<StoryFetchModalProps> = ({ isOpen, onClos
                   href={fetchedStory.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-slate-400 hover:text-white transition"
+                  className="text-[#8B949E] hover:text-[#E6EDF3] transition"
                   title="Open in new tab"
                 >
-                  <ExternalLink className="w-4 h-4" />
+                  <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               )}
             </div>
 
-            <h4 className="font-heading font-bold text-sm text-white">
+            <h4 className="font-medium text-xs text-[#E6EDF3]">
               {fetchedStory.title}
             </h4>
 
-            {fetchedStory.description ? (
-              <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">
+            {fetchedStory.description && (
+              <p className="text-[11px] text-[#8B949E] line-clamp-3 leading-relaxed">
                 {fetchedStory.description}
               </p>
-            ) : (
-              <p className="text-xs text-slate-500 italic">No description provided.</p>
             )}
 
-            {/* Actions for fetched story */}
-            <div className="pt-2 flex items-center justify-end space-x-2 border-t border-white/10">
+            <div className="pt-2 flex items-center justify-end gap-2 border-t border-[#30363D]">
               <button
                 type="button"
                 onClick={() => handleAddToBacklog(false)}
                 disabled={isAdded}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 bg-white/10 hover:bg-white/20 transition cursor-pointer flex items-center space-x-1"
+                className="px-2.5 py-1 text-xs text-[#E6EDF3] rounded transition cursor-pointer"
+                style={{ background: '#0D1117', border: '1px solid #30363D' }}
               >
-                {isAdded ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <FileText className="w-3.5 h-3.5" />}
-                <span>{isAdded ? 'Added!' : 'Add to Backlog'}</span>
+                {isAdded ? 'Added!' : 'Add to Backlog'}
               </button>
 
               <button
                 type="button"
                 onClick={() => handleAddToBacklog(true)}
                 disabled={isAdded}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition shadow-md shadow-emerald-600/30 cursor-pointer flex items-center space-x-1"
+                className="px-2.5 py-1 text-xs text-white rounded transition cursor-pointer flex items-center gap-1"
+                style={{ background: '#7C3AED', border: 'none' }}
               >
                 <Check className="w-3.5 h-3.5" />
                 <span>Point Now</span>

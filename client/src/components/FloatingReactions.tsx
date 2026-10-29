@@ -11,22 +11,27 @@ export const FloatingReactions: React.FC = () => {
       {/* Floating Animated Emojis */}
       <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
         {reactions.map((rx, idx) => {
-          // Calculate random starting X position based on timestamp and ID
           const seed = (rx.timestamp + idx * 79) % 80;
-          const leftPercent = rx.x !== undefined ? rx.x : 10 + seed; // between 10% and 90%
+          const leftPercent = rx.x !== undefined ? rx.x : 10 + seed;
 
           return (
             <div
               key={rx.id}
-              className="absolute bottom-24 flex flex-col items-center reaction-float"
+              className="absolute bottom-20 flex flex-col items-center reaction-float"
               style={{
                 left: `${leftPercent}%`
               }}
             >
-              <span className="text-4xl filter drop-shadow-xl select-none transform hover:scale-125 transition">
+              <span className="text-3xl select-none">
                 {rx.emoji}
               </span>
-              <span className="text-[10px] font-semibold bg-black/75 text-slate-200 px-2 py-0.5 rounded-full mt-1.5 border border-white/10 backdrop-blur-md select-none shadow-md">
+              <span 
+                className="text-[10px] font-medium text-[#E6EDF3] px-1.5 py-0.2 rounded mt-1 select-none"
+                style={{
+                  background: '#161B22',
+                  border: '1px solid #30363D'
+                }}
+              >
                 {rx.senderName}
               </span>
             </div>
@@ -34,14 +39,34 @@ export const FloatingReactions: React.FC = () => {
         })}
       </div>
 
-      {/* Floating Reaction Dock (8 Emojis) */}
-      <div className="fixed bottom-4 right-4 z-40 flex items-center space-x-1 p-1.5 rounded-2xl glass-card border border-white/10 shadow-2xl backdrop-blur-xl">
+      {/* Clean Reaction Dock */}
+      <div 
+        className="fixed bottom-4 right-4 z-40"
+        style={{
+          background: '#1C2128',
+          border: '1px solid #30363D',
+          borderRadius: '8px',
+          padding: '4px 6px',
+          display: 'flex',
+          gap: '4px'
+        }}
+      >
         {EMOJIS.map(emoji => (
           <button
             key={emoji}
             onClick={() => sendReaction(emoji)}
-            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl text-lg hover:scale-130 active:scale-95 hover:bg-white/10 transition-all duration-150 cursor-pointer select-none"
-            title={`React with ${emoji}`}
+            className="flex items-center justify-center transition cursor-pointer select-none"
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '4px',
+              border: 'none',
+              background: 'transparent',
+              fontSize: '18px'
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#30363D')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            title={`React ${emoji}`}
           >
             {emoji}
           </button>

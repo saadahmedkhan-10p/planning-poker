@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { usePoker } from '../context/PokerContext';
 import { PlayingCard } from './PlayingCard';
-import { Eye, X } from 'lucide-react';
+import { Eye } from 'lucide-react';
 
 export const CardDeck: React.FC = () => {
   const { 
@@ -18,12 +18,11 @@ export const CardDeck: React.FC = () => {
   const isObserver = myParticipant?.role === 'observer';
   const currentVote = myParticipant?.vote;
 
-  // Keyboard shortcut support (1-9 for deck values)
+  // Keyboard shortcut support (1-9 for deck values, c/esc to clear)
   useEffect(() => {
     if (isObserver) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if typing in an input or textarea
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
 
       const num = parseInt(e.key, 10);
@@ -42,16 +41,30 @@ export const CardDeck: React.FC = () => {
 
   if (isObserver) {
     return (
-      <div className="w-full max-w-4xl mx-auto p-4 rounded-2xl glass-card text-center flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg border border-white/10">
-        <div className="flex items-center space-x-3 text-slate-300 text-sm">
-          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-slate-400">
-            <Eye className="w-4 h-4" />
-          </div>
+      <div 
+        className="w-full max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs"
+        style={{
+          background: '#1C2128',
+          border: '1px solid #30363D',
+          borderRadius: '8px',
+          padding: '12px 16px'
+        }}
+      >
+        <div className="flex items-center gap-2.5 text-[#8B949E]">
+          <Eye className="w-4 h-4 text-[#8B949E]" />
           <span>You are viewing as an <strong>Observer</strong>. Join as estimator to vote on points.</span>
         </div>
         <button
           onClick={() => updateRole(currentUser.id, 'estimator')}
-          className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-500 transition shadow-md shadow-violet-600/30 cursor-pointer whitespace-nowrap"
+          className="text-white text-xs font-medium transition cursor-pointer"
+          style={{
+            background: '#7C3AED',
+            border: 'none',
+            borderRadius: '6px',
+            padding: '6px 12px'
+          }}
+          onMouseEnter={e => (e.currentTarget.style.background = '#6D28D9')}
+          onMouseLeave={e => (e.currentTarget.style.background = '#7C3AED')}
         >
           Join as Estimator
         </button>
@@ -60,31 +73,38 @@ export const CardDeck: React.FC = () => {
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto flex flex-col items-center">
+    <div 
+      className="w-full max-w-4xl mx-auto"
+      style={{
+        background: '#161B22',
+        border: '1px solid #30363D',
+        borderRadius: '8px',
+        padding: '16px 20px'
+      }}
+    >
       {/* Hand Header */}
-      <div className="flex items-center justify-between w-full px-3 mb-2">
-        <div className="flex items-center space-x-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 font-heading">
-            Your Estimation Hand
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-[#8B949E]">
+            Your vote {currentVote ? `: ${currentVote}` : ''}
           </span>
-          <span className="hidden sm:inline text-[11px] text-slate-500">
-            (Press 1-9 to pick instantly)
-          </span>
+          {currentVote && (
+            <button
+              onClick={() => castVote(null)}
+              className="text-xs text-[#8B949E] hover:underline cursor-pointer bg-transparent border-none p-0 ml-2"
+            >
+              Clear
+            </button>
+          )}
         </div>
 
-        {currentVote && (
-          <button
-            onClick={() => castVote(null)}
-            className="inline-flex items-center space-x-1 text-xs text-rose-400 hover:text-rose-300 transition cursor-pointer font-medium bg-rose-500/10 hover:bg-rose-500/20 px-2.5 py-1 rounded-lg border border-rose-500/20"
-          >
-            <X className="w-3.5 h-3.5" />
-            <span>Clear vote ({currentVote})</span>
-          </button>
-        )}
+        <span className="text-xs text-[#484F58]">
+          Press 1-9 to pick • Esc to clear
+        </span>
       </div>
 
-      {/* Hand Cards */}
-      <div className="w-full overflow-x-auto pb-4 pt-2 px-3 flex items-center justify-start md:justify-center gap-2.5 sm:gap-3.5 scrollbar-none">
+      {/* Cards Row */}
+      <div className="w-full overflow-x-auto flex items-center justify-start sm:justify-center gap-2 pb-1 pt-1">
         {activeDeck.map((val, idx) => {
           const isSelected = currentVote === val;
           const shortcut = idx < 9 ? idx + 1 : undefined;

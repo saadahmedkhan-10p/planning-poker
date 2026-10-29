@@ -1,15 +1,13 @@
 import React from 'react';
 import { usePoker } from '../context/PokerContext';
 import { 
-  Bookmark, 
   ExternalLink, 
   ChevronRight, 
   ChevronLeft, 
   CheckCircle2, 
   RotateCcw, 
-  ArrowRight,
   Layers,
-  DownloadCloud
+  Link as LinkIcon
 } from 'lucide-react';
 
 interface ActiveStoryCardProps {
@@ -33,24 +31,42 @@ export const ActiveStoryCard: React.FC<ActiveStoryCardProps> = ({
 
   if (!activeStory) {
     return (
-      <div className="w-full max-w-4xl mx-auto p-4 rounded-2xl glass-card border border-dashed border-white/10 text-center flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
-        <div className="flex items-center space-x-3 text-slate-400 text-sm">
-          <Bookmark className="w-4 h-4 text-violet-400" />
-          <span>No story actively selected for pointing.</span>
-        </div>
-        <div className="flex items-center space-x-2">
+      <div 
+        className="w-full max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs mb-4"
+        style={{
+          background: '#161B22',
+          border: '1px solid #30363D',
+          borderRadius: '8px',
+          padding: '16px 20px'
+        }}
+      >
+        <span className="text-[#8B949E]">
+          No story actively selected for pointing.
+        </span>
+        <div className="flex items-center gap-2">
           <button
             onClick={onOpenImportModal}
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-violet-600/30 hover:bg-violet-600/50 border border-violet-500/40 transition cursor-pointer flex items-center space-x-1.5"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-[#E6EDF3] transition cursor-pointer"
+            style={{
+              background: '#1C2128',
+              border: '1px solid #30363D',
+              borderRadius: '6px'
+            }}
+            title="Import from URL"
           >
-            <DownloadCloud className="w-3.5 h-3.5 text-violet-300" />
-            <span>Fetch from ADO / Jira</span>
+            <LinkIcon className="w-3.5 h-3.5 text-[#8B949E]" />
+            <span>Import URL</span>
           </button>
           <button
             onClick={onOpenStoryDrawer}
-            className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-200 bg-white/10 hover:bg-white/20 border border-white/10 transition cursor-pointer"
+            className="px-3 py-1.5 rounded text-xs text-[#E6EDF3] transition cursor-pointer"
+            style={{
+              background: '#1C2128',
+              border: '1px solid #30363D',
+              borderRadius: '6px'
+            }}
           >
-            Select from Backlog
+            Open Backlog
           </button>
         </div>
       </div>
@@ -58,37 +74,63 @@ export const ActiveStoryCard: React.FC<ActiveStoryCardProps> = ({
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto rounded-2xl glass-card border border-white/10 p-4 sm:p-5 transition-all text-slate-100 shadow-xl">
+    <div 
+      className="w-full max-w-5xl mx-auto mb-4"
+      style={{
+        background: '#161B22',
+        border: '1px solid #30363D',
+        borderRadius: '8px',
+        padding: '16px 20px'
+      }}
+    >
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         {/* Story details */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center space-x-2 mb-2 flex-wrap gap-y-1">
-            <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-violet-600/30 text-violet-300 border border-violet-500/30">
-              <Bookmark className="w-3 h-3 mr-1" />
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span 
+              className="font-medium text-[11px]"
+              style={{
+                background: 'rgba(124, 58, 237, 0.12)',
+                border: '1px solid rgba(124, 58, 237, 0.3)',
+                color: '#A78BFA',
+                borderRadius: '4px',
+                padding: '2px 7px'
+              }}
+            >
               Active Story
             </span>
 
-            {/* Story position indicator */}
+            {/* Position indicator */}
             {totalStories > 0 && currentIndex >= 0 && (
-              <span className="text-[11px] font-mono font-medium text-slate-400 bg-white/5 px-2 py-0.5 rounded-md border border-white/10">
+              <span className="text-[11px] font-mono text-[#8B949E]">
                 Story {currentIndex + 1} of {totalStories}
               </span>
             )}
 
+            {/* Estimated points badge if estimated */}
             {activeStory.points && (
-              <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-400" />
-                {activeStory.points} {activeStory.points === '1' ? 'Point' : 'Points'}
+              <span 
+                className="inline-flex items-center text-[11px] font-medium"
+                style={{
+                  background: 'rgba(63, 185, 80, 0.1)',
+                  border: '1px solid rgba(63, 185, 80, 0.3)',
+                  color: '#3FB950',
+                  borderRadius: '4px',
+                  padding: '2px 7px'
+                }}
+              >
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                {activeStory.points} {activeStory.points === '1' ? 'pt' : 'pts'}
               </span>
             )}
           </div>
 
-          <h2 className="font-heading font-bold text-lg sm:text-xl text-white leading-snug">
+          <h2 className="font-semibold text-base text-[#E6EDF3] leading-snug">
             {activeStory.title}
           </h2>
 
           {activeStory.description && (
-            <p className="mt-1.5 text-xs sm:text-sm text-slate-400 line-clamp-2 leading-relaxed">
+            <p className="mt-1 text-xs text-[#8B949E] line-clamp-2 leading-relaxed">
               {activeStory.description}
             </p>
           )}
@@ -98,71 +140,92 @@ export const ActiveStoryCard: React.FC<ActiveStoryCardProps> = ({
               href={activeStory.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center space-x-1 mt-2 text-xs text-cyan-400 hover:text-cyan-300 transition font-medium"
+              className="inline-flex items-center gap-1 mt-2 text-xs text-[#8B949E] hover:text-[#E6EDF3] transition"
             >
-              <span>View in Work Item Tracker</span>
+              <span>View in tracker</span>
               <ExternalLink className="w-3 h-3" />
             </a>
           )}
         </div>
 
-        {/* Story controls */}
-        <div className="flex items-center space-x-2 shrink-0 self-end sm:self-center flex-wrap gap-y-2">
-          {/* Quick Import Button */}
+        {/* Story controls & navigation */}
+        <div className="flex items-center gap-1.5 shrink-0 self-start sm:self-center">
+          {/* Import link button */}
           <button
             onClick={onOpenImportModal}
-            className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-violet-300 bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 transition cursor-pointer"
-            title="Import Story from URL"
+            className="w-8 h-8 rounded flex items-center justify-center text-[#8B949E] hover:text-[#E6EDF3] transition cursor-pointer"
+            style={{
+              background: '#1C2128',
+              border: '1px solid #30363D',
+              borderRadius: '6px'
+            }}
+            title="Import story from URL"
           >
-            <DownloadCloud className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Import</span>
+            <LinkIcon className="w-3.5 h-3.5" />
           </button>
 
           {/* Revote button */}
           {room.isRevealed && isFacilitator && (
             <button
               onClick={resetVotes}
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-300 bg-white/10 hover:bg-white/20 border border-white/10 transition cursor-pointer"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded text-xs text-[#8B949E] hover:text-[#E6EDF3] transition cursor-pointer"
+              style={{
+                background: '#1C2128',
+                border: '1px solid #30363D',
+                borderRadius: '6px'
+              }}
               title="Revote this story"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+              <RotateCcw className="w-3 h-3" />
               <span>Revote</span>
             </button>
           )}
 
-          {/* Prev Story */}
+          {/* Navigation Prev/Next */}
           {prevStory && isFacilitator && (
             <button
               onClick={() => setActiveStory(prevStory.id)}
-              className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-xs font-medium text-slate-300 bg-white/10 hover:bg-white/20 border border-white/10 transition cursor-pointer"
-              title={`Go to previous: ${prevStory.title}`}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded text-xs text-[#8B949E] hover:text-[#E6EDF3] transition cursor-pointer"
+              style={{
+                background: '#1C2128',
+                border: '1px solid #30363D',
+                borderRadius: '6px'
+              }}
+              title="Previous story"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Prev</span>
+              <span>Prev</span>
             </button>
           )}
 
-          {/* Next Story */}
           {nextStory && isFacilitator && (
             <button
               onClick={() => setActiveStory(nextStory.id)}
-              className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-violet-600 hover:bg-violet-500 shadow-md shadow-violet-600/30 transition cursor-pointer"
-              title={`Next story: ${nextStory.title}`}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded text-xs text-[#E6EDF3] transition cursor-pointer"
+              style={{
+                background: '#1C2128',
+                border: '1px solid #30363D',
+                borderRadius: '6px'
+              }}
+              title="Next story"
             >
               <span>Next</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           )}
 
-          {/* Backlog Drawer Button */}
+          {/* Open Backlog */}
           <button
             onClick={onOpenStoryDrawer}
-            className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer"
-            title="Open backlog list"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded text-xs text-[#8B949E] hover:text-[#E6EDF3] transition cursor-pointer"
+            style={{
+              background: '#1C2128',
+              border: '1px solid #30363D',
+              borderRadius: '6px'
+            }}
           >
-            <Layers className="w-3.5 h-3.5 text-slate-400" />
+            <Layers className="w-3.5 h-3.5" />
             <span>Backlog</span>
-            <ChevronRight className="w-3 h-3 text-slate-400" />
           </button>
         </div>
       </div>
