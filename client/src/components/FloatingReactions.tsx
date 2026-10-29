@@ -39,16 +39,14 @@ export const FloatingReactions: React.FC = () => {
         })}
       </div>
 
-      {/* Clean Reaction Dock */}
+      {/* Clean Reaction Dock — sits above the sticky CardDeck bar */}
       <div 
-        className="fixed bottom-4 right-4 z-40"
+        className="fixed bottom-28 right-3 z-40 flex flex-col gap-1"
         style={{
           background: '#1C2128',
           border: '1px solid #30363D',
           borderRadius: '8px',
-          padding: '4px 6px',
-          display: 'flex',
-          gap: '4px'
+          padding: '6px 4px',
         }}
       >
         {EMOJIS.map(emoji => (
@@ -57,16 +55,17 @@ export const FloatingReactions: React.FC = () => {
             onClick={() => sendReaction(emoji)}
             className="flex items-center justify-center transition cursor-pointer select-none"
             style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '4px',
+              width: '34px',
+              height: '34px',
+              borderRadius: '6px',
               border: 'none',
               background: 'transparent',
-              fontSize: '18px'
+              fontSize: '20px',
+              lineHeight: 1
             }}
             onMouseEnter={e => (e.currentTarget.style.background = '#30363D')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-            title={`React ${emoji}`}
+            title={emoji}
           >
             {emoji}
           </button>
