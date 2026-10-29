@@ -36,10 +36,10 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  // Update URL without page reload when joined
+  // Update URL without page reload when joined — always overwrite any stale params
   const handleSelectRoom = (roomId: string) => {
-    const newUrl = `${window.location.pathname}?room=${roomId}`;
-    window.history.replaceState({ path: newUrl }, '', newUrl);
+    const newUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
+    window.history.replaceState({ roomId }, '', newUrl);
   };
 
   // Determine if user has joined this room

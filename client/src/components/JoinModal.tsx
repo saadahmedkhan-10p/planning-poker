@@ -24,7 +24,9 @@ interface JoinModalProps {
 export const JoinModal: React.FC<JoinModalProps> = ({ initialRoomId, onSelectRoom }) => {
   const { currentUser, joinRoom } = usePoker();
 
-  const [mode, setMode] = useState<'create' | 'join'>(initialRoomId ? 'join' : 'create');
+  // Lock to 'join' mode when an invite link room ID is present
+  const isInviteLink = Boolean(initialRoomId);
+  const [mode, setMode] = useState<'create' | 'join'>(isInviteLink ? 'join' : 'create');
   const [roomIdInput, setRoomIdInput] = useState(initialRoomId || '');
   const [roomNameInput, setRoomNameInput] = useState('Sprint Planning');
   const [displayName, setDisplayName] = useState(currentUser?.name || '');
@@ -61,12 +63,14 @@ export const JoinModal: React.FC<JoinModalProps> = ({ initialRoomId, onSelectRoo
             AgilePoint
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Real-time planning poker with WebRTC camera pods and ADO/Jira sync.
+            {isInviteLink
+              ? "You've been invited! Enter your name to join the session."
+              : 'Real-time planning poker with WebRTC camera pods and ADO/Jira sync.'}
           </p>
         </div>
 
-        {/* Mode Toggle (Create vs Join) */}
-        {!initialRoomId && (
+        {/* Mode Toggle (Create vs Join) — hidden when arriving via invite link */}
+        {!isInviteLink && (
           <div className="flex rounded-xl bg-white/5 border border-white/10 p-1 mb-6">
             <button
               type="button"
@@ -117,14 +121,22 @@ export const JoinModal: React.FC<JoinModalProps> = ({ initialRoomId, onSelectRoo
               <label className="block text-xs font-semibold text-slate-300 mb-1">
                 Room Code / ID
               </label>
-              <input
-                type="text"
-                value={roomIdInput}
-                onChange={e => setRoomIdInput(e.target.value)}
-                placeholder="e.g. swift-sprint-104"
-                required
-                className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-violet-500 focus:outline-none font-mono transition"
-              />
+              {isInviteLink ? (
+                /* Locked — room ID comes from invite link */
+                <div className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-violet-600/10 border border-violet-500/30 text-violet-300 font-mono flex items-center justify-between">
+                  <span className="truncate">{roomIdInput}</span>
+                  <span className="text-[10px] text-violet-400 ml-2 shrink-0 font-sans">Invite link ✓</span>
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  value={roomIdInput}
+                  onChange={e => setRoomIdInput(e.target.value)}
+                  placeholder="e.g. swift-sprint-104"
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-violet-500 focus:outline-none font-mono transition"
+                />
+              )}
             </div>
           )}
 
@@ -204,7 +216,7 @@ export const JoinModal: React.FC<JoinModalProps> = ({ initialRoomId, onSelectRoo
             type="submit"
             className="w-full mt-4 py-3 rounded-xl text-sm font-semibold text-white bg-violet-600 hover:bg-violet-500 transition shadow-lg shadow-violet-600/30 cursor-pointer inline-flex items-center justify-center space-x-2"
           >
-            <span>{mode === 'create' ? 'Start Session' : 'Enter Session'}</span>
+            <span>{mode === 'create' ? 'Start Session' : isInviteLink ? 'Join Session' : 'Enter Session'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>

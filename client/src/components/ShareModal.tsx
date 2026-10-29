@@ -13,7 +13,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen || !room) return null;
 
-  const roomUrl = window.location.origin + window.location.pathname + (window.location.search ? '' : `?room=${room.id}`);
+  const roomUrl = `${window.location.origin}${window.location.pathname}?room=${room.id}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(roomUrl).then(() => {
