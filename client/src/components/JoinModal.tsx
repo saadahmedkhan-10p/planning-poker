@@ -24,11 +24,22 @@ export const JoinModal: React.FC<JoinModalProps> = ({ initialRoomId, onSelectRoo
   const [role, setRole] = useState<ParticipantRole>('estimator');
   const [avatarColor, setAvatarColor] = useState(currentUser?.avatarColor || AVATAR_COLORS[0]);
 
+  // Keep state in sync if initialRoomId prop changes (e.g. navigation or URL param read)
+  React.useEffect(() => {
+    if (initialRoomId) {
+      setMode('join');
+      setRoomIdInput(initialRoomId);
+    }
+  }, [initialRoomId]);
+
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
-    const targetRoomId = (mode === 'create' 
-      ? roomNameInput.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Math.floor(100 + Math.random() * 900) 
-      : roomIdInput
+    // If arriving via invite link, strictly use initialRoomId/roomIdInput
+    const targetRoomId = (isInviteLink
+      ? (initialRoomId || roomIdInput)
+      : (mode === 'create'
+          ? roomNameInput.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Math.floor(100 + Math.random() * 900)
+          : roomIdInput)
     ).trim();
     if (!targetRoomId) return;
 

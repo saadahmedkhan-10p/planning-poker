@@ -20,9 +20,18 @@ export const App: React.FC = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isStoryFetchModalOpen, setIsStoryFetchModalOpen] = useState(false);
-  const [initialRoomId, setInitialRoomId] = useState<string | null>(null);
-
   // Check URL params for room id
+  const [initialRoomId, setInitialRoomId] = useState<string | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const roomParam = params.get('room');
+    if (roomParam) return roomParam;
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    if (pathParts.length > 0 && pathParts[0] === 'room' && pathParts[1]) {
+      return pathParts[1];
+    }
+    return null;
+  });
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const roomParam = params.get('room');
