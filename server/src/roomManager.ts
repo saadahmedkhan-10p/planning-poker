@@ -192,6 +192,7 @@ export class RoomManager {
   public castVote(roomId: string, participantId: string, vote: string | null): { room: Room; shouldAutoReveal: boolean } {
     const room = this.getRoom(roomId);
     if (!room) throw new Error('Room not found');
+    if (room.isRevealed) throw new Error('Votes cannot be changed while cards are revealed');
 
     const participant = room.participants[participantId];
     if (!participant) throw new Error('Participant not in room');

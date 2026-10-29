@@ -17,10 +17,11 @@ export const CardDeck: React.FC = () => {
   const myParticipant = room.participants.find(p => p.id === currentUser.id);
   const isObserver = myParticipant?.role === 'observer';
   const currentVote = myParticipant?.vote;
+  const isRevealed = Boolean(room.isRevealed);
 
   // Keyboard shortcut support (1-9 for deck values, c/esc to clear)
   useEffect(() => {
-    if (isObserver) return;
+    if (isObserver || isRevealed) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
@@ -37,7 +38,7 @@ export const CardDeck: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isObserver, activeDeck, currentVote, castVote]);
+  }, [isObserver, isRevealed, activeDeck, currentVote, castVote]);
 
   if (isObserver) {
     return (
@@ -86,9 +87,11 @@ export const CardDeck: React.FC = () => {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-[#8B949E]">
-            Your vote {currentVote ? `: ${currentVote}` : ''}
+            {isRevealed
+              ? `Voting locked (cards revealed) • Final vote: ${currentVote || 'None'}`
+              : `Your vote ${currentVote ? `: ${currentVote}` : ''}`}
           </span>
-          {currentVote && (
+          {!isRevealed && currentVote && (
             <button
               onClick={() => castVote(null)}
               className="text-xs text-[#8B949E] hover:underline cursor-pointer bg-transparent border-none p-0 ml-2"
@@ -99,15 +102,15 @@ export const CardDeck: React.FC = () => {
         </div>
 
         <span className="text-xs text-[#484F58]">
-          Press 1-9 to pick • Esc to clear
+          {isRevealed ? 'Revealed' : 'Press 1-9 to pick • Esc to clear'}
         </span>
       </div>
 
       {/* Cards Row */}
-      <div className="w-full overflow-x-auto flex items-center justify-start sm:justify-center gap-2 pb-1 pt-1">
+      <div className={`w-full overflow-x-auto flex items-center justify-start sm:justify-center gap-2 pb-1 pt-1 ${isRevealed ? 'opacity-50 pointer-events-none' : ''}`}>
         {activeDeck.map((val, idx) => {
           const isSelected = currentVote === val;
-          const shortcut = idx < 9 ? idx + 1 : undefined;
+          const shortcut = idx < 9 && !isRevealed ? idx + 1 : undefined;
 
           return (
             <PlayingCard
@@ -115,8 +118,9 @@ export const CardDeck: React.FC = () => {
               value={val}
               size="md"
               isSelected={isSelected}
+              disabled={isRevealed}
               shortcutKey={shortcut}
-              onClick={() => castVote(isSelected ? null : val)}
+              onClick={() => !isRevealed && castVote(isSelected ? null : val)}
             />
           );
         })}

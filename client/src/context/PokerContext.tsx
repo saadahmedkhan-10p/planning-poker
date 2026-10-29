@@ -255,7 +255,7 @@ export const PokerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [socket, room]);
 
   const castVote = useCallback((vote: string | null) => {
-    if (!socket || !room) return;
+    if (!socket || !room || room.isRevealed) return;
     soundEffects.playCardPick();
     socket.emit('cast_vote', { roomId: room.id, vote });
   }, [socket, room]);
