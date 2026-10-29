@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import type { Participant } from '../types/poker';
 import { PlayingCard } from './PlayingCard';
-import { Mic, MicOff, UserMinus, Eye } from 'lucide-react';
+import { Mic, MicOff, UserMinus, Eye, Crown } from 'lucide-react';
 
 interface VideoTileProps {
   participant: Participant;
@@ -189,13 +189,30 @@ export const VideoTile: React.FC<VideoTileProps> = ({
       {/* Participant info */}
       <div className="w-full flex flex-col items-center text-center">
         <span 
-          className="text-xs font-medium text-[#E6EDF3] truncate w-full"
+          className="text-xs font-medium text-[#E6EDF3] truncate w-full flex items-center justify-center gap-1"
           title={participant.name}
         >
-          {participant.name}
+          {isHost && (
+            <span title="Session Host" className="inline-flex items-center text-[#D29922]">
+              <Crown className="w-3 h-3 shrink-0" />
+            </span>
+          )}
+          <span className="truncate">{participant.name}</span>
         </span>
-        <span className="text-[10px] text-[#8B949E] mt-0.5">
-          {isLocal ? 'You' : isHost ? 'Host' : isObserver ? 'Observer' : !participant.connected ? 'Offline' : ''}
+        <span className="text-[10px] text-[#8B949E] mt-0.5 flex items-center justify-center gap-1">
+          {isHost ? (
+            <span className="inline-flex items-center gap-0.5 text-[#D29922] font-medium">
+              Host {isLocal ? '(You)' : ''}
+            </span>
+          ) : isLocal ? (
+            'You'
+          ) : isObserver ? (
+            'Observer'
+          ) : !participant.connected ? (
+            'Offline'
+          ) : (
+            ''
+          )}
         </span>
       </div>
 

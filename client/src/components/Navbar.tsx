@@ -9,7 +9,8 @@ import {
   QrCode, 
   LogOut,
   Camera,
-  CameraOff
+  CameraOff,
+  Crown
 } from 'lucide-react';
 import { usePoker } from '../context/PokerContext';
 
@@ -212,12 +213,23 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* User avatar & leave */}
         {currentUser && (
           <div className="flex items-center gap-1.5 pl-1">
-            <div 
-              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white select-none"
-              style={{ backgroundColor: currentUser.avatarColor }}
-              title={`${currentUser.name} (${currentUser.role})`}
-            >
-              {currentUser.name.charAt(0).toUpperCase() || 'U'}
+            <div className="relative">
+              <div 
+                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white select-none"
+                style={{ backgroundColor: currentUser.avatarColor }}
+                title={`${currentUser.name} (${isFacilitator ? 'Host' : currentUser.role})`}
+              >
+                {currentUser.name.charAt(0).toUpperCase() || 'U'}
+              </div>
+              {isFacilitator && (
+                <div 
+                  className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center text-[#D29922]"
+                  style={{ background: '#161B22', border: '1px solid #30363D' }}
+                  title="Session Host"
+                >
+                  <Crown className="w-2.5 h-2.5 fill-current" />
+                </div>
+              )}
             </div>
             <button
               onClick={leaveRoom}
